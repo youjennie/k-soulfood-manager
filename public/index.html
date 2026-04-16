@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>K-Soulfood 매장 관리 대시보드</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#127472;&#127479;</text></svg>">
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3;
+    --text-muted: #8b949e; --header-bg: rgba(13,17,23,0.95); --input-bg: #0d1117;
+    --sidebar-bg: #0a0e14; --sidebar-active: rgba(88,166,255,0.12);
+    --critical: #f85149; --critical-bg: rgba(248,81,73,0.12);
+    --high: #d29922; --high-bg: rgba(210,153,34,0.12);
+    --medium: #58a6ff; --medium-bg: rgba(88,166,255,0.12);
+    --accent: #58a6ff; --green: #3fb950; --green-bg: rgba(63,185,80,0.12);
+    --cal-today: rgba(88,166,255,0.25);
+    --purple: #a371f7; --purple-bg: rgba(163,113,247,0.12);
+    --pink: #f778ba; --pink-bg: rgba(247,120,186,0.12);
+    --orange: #f0883e; --orange-bg: rgba(240,136,62,0.12);
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f7; --card: #ffffff; --border: #d1d5db; --text: #1f2937;
+    --text-muted: #6b7280; --header-bg: rgba(245,245,247,0.95); --input-bg: #f0f0f2;
+    --sidebar-bg: #eaeaee; --sidebar-active: rgba(37,99,235,0.1);
+    --critical: #dc2626; --critical-bg: rgba(220,38,38,0.08);
+    --high: #d97706; --high-bg: rgba(217,119,6,0.08);
+    --medium: #2563eb; --medium-bg: rgba(37,99,235,0.08);
+    --accent: #2563eb; --green: #16a34a; --green-bg: rgba(22,163,74,0.08);
+    --cal-today: rgba(37,99,235,0.15);
+    --purple: #7c3aed; --purple-bg: rgba(124,58,237,0.08);
+    --pink: #db2777; --pink-bg: rgba(219,39,119,0.08);
+    --orange: #ea580c; --orange-bg: rgba(234,88,12,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s;overflow:hidden;height:100vh;}
+
+  /* LAYOUT */
+  .app-layout{display:flex;height:100vh;overflow:hidden;}
+
+  /* SIDEBAR */
+  .sidebar{width:220px;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s,transform .3s;z-index:200;}
+  .sidebar-brand{padding:20px 16px 12px;border-bottom:1px solid var(--border);}
+  .sidebar-brand h2{font-size:15px;font-weight:800;letter-spacing:-0.3px;}
+  .sidebar-brand .brand-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+  .sidebar-nav{flex:1;padding:8px;overflow-y:auto;}
+  .nav-section{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:12px 10px 6px;font-weight:700;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .15s;margin-bottom:2px;}
+  .nav-item:hover{background:var(--sidebar-active);color:var(--text);}
+  .nav-item.active{background:var(--sidebar-active);color:var(--accent);font-weight:600;}
+  .nav-item .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .nav-item .nav-badge{margin-left:auto;font-size:10px;font-weight:700;background:var(--critical-bg);color:var(--critical);padding:1px 7px;border-radius:10px;}
+  .sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .theme-toggle{width:40px;height:22px;border-radius:11px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background .3s;}
+  .theme-toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--text);transition:transform .3s;}
+  [data-theme="light"] .theme-toggle{background:var(--accent);}
+  [data-theme="light"] .theme-toggle::after{transform:translateX(18px);background:#fff;}
+  .theme-lbl{font-size:10px;color:var(--text-muted);}
+
+  /* MOBILE SIDEBAR */
+  .mobile-menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:300;width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;align-items:center;justify-content:center;}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:190;}
+
+  /* MAIN */
+  .main-content{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+  /* PAGE HEADER */
+  .page-header{position:sticky;top:0;z-index:100;background:var(--header-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;}
+  .page-header h1{font-size:18px;font-weight:700;}
+  .page-header .ph-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+
+  /* SUB TABS */
+  .sub-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--card);}
+  .sub-tab{flex:1;padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+  .sub-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* PAGE CONTENT */
+  .page{display:none;}
+  .page.active{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+  .page-scroll{flex:1;overflow-y:auto;padding-bottom:80px;}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 20px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 14px 12px;text-align:center;position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .stat-critical::before{background:var(--critical);} .stat-high::before{background:var(--high);}
+  .stat-medium::before{background:var(--medium);} .stat-done::before{background:var(--green);}
+  .stat-card .num{font-size:28px;font-weight:800;line-height:1;}
+  .stat-card .label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-weight:600;}
+  .stat-critical .num{color:var(--critical);} .stat-high .num{color:var(--high);}
+  .stat-medium .num{color:var(--medium);} .stat-done .num{color:var(--green);}
+
+  /* FILTERS */
+  .filters{display:flex;gap:6px;padding:8px 20px;overflow-x:auto;scrollbar-width:none;}
+  .filters::-webkit-scrollbar{display:none;}
+  .filter-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--text-muted);cursor:pointer;transition:all .15s;}
+  .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* TASK CARDS */
+  .task-list{padding:10px 16px;}
+  .task-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;transition:all .2s;border-left:4px solid var(--border);}
+  .task-card.risk-critical{border-left-color:var(--critical);}
+  .task-card.risk-high{border-left-color:var(--high);}
+  .task-card.risk-medium{border-left-color:var(--medium);}
+  .task-card.urgent-glow{box-shadow:0 0 0 1px var(--critical-bg),0 2px 12px var(--critical-bg);}
+  .task-card:hover{border-color:var(--text-muted);}
+  .task-card.completed{opacity:.4;border-left-color:var(--green);}
+  .task-card.completed .task-title{text-decoration:line-through;}
+  .task-header{padding:16px 18px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;}
+  .task-check{flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:2px;}
+  .task-check:hover{border-color:var(--green);}
+  .task-check.checked{background:var(--green);border-color:var(--green);}
+  .task-check.checked::after{content:'\2713';color:#fff;font-size:12px;font-weight:700;}
+  .task-content{flex:1;min-width:0;}
+  .task-title{font-size:15px;font-weight:700;letter-spacing:-0.2px;}
+  .task-meta{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;}
+  .badge-critical{background:var(--critical-bg);color:var(--critical);border:1px solid rgba(248,81,73,.2);}
+  .badge-high{background:var(--high-bg);color:var(--high);border:1px solid rgba(210,153,34,.2);}
+  .badge-medium{background:var(--medium-bg);color:var(--medium);border:1px solid rgba(88,166,255,.2);}
+  .badge-category{background:rgba(139,148,158,.1);color:var(--text-muted);font-weight:600;}
+  .badge-due{background:var(--critical);color:#fff;font-weight:800;padding:3px 10px;animation:pulse-due 2s ease-in-out infinite;}
+  @keyframes pulse-due{0%,100%{opacity:1;}50%{opacity:.7;}}
+  .badge-recurring{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,185,80,.2);}
+  .badge-date{background:var(--medium-bg);color:var(--medium);}
+  .time-window{font-size:11px;color:var(--high);margin-top:6px;font-weight:600;}
+  .task-details{display:none;padding:0 18px 16px 52px;border-top:1px solid var(--border);margin-top:8px;padding-top:14px;}
+  .task-details.open{display:block;}
+  .risk-box{background:var(--critical-bg);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--critical);border-left:4px solid var(--critical);line-height:1.6;}
+  .risk-box strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;opacity:.8;}
+  .action-label{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;}
+  .what-to-do{font-size:13px;color:var(--text);margin-bottom:12px;padding:10px 14px;background:rgba(88,166,255,.08);border-radius:10px;border-left:4px solid var(--accent);line-height:1.6;}
+  .checklist-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:13px;color:var(--text-muted);}
+  .cl-check{flex-shrink:0;width:18px;height:18px;border-radius:5px;border:2px solid var(--border);cursor:pointer;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+  .cl-check:hover{border-color:var(--green);}
+  .cl-check.checked{background:var(--green);border-color:var(--green);}
+  .cl-check.checked::after{content:'\2713';color:#fff;font-size:10px;font-weight:700;}
+  .cl-check.checked+span{text-decoration:line-through;opacity:.5;}
+  .action-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .action-btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;background:var(--accent);color:#fff;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
+  .action-btn:hover{opacity:.85;transform:translateY(-1px);}
+  .action-btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+  .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px;}
+  .tag{font-size:9px;color:var(--text-muted);background:rgba(139,148,158,.08);padding:2px 7px;border-radius:4px;}
+
+  /* DATE FIELDS */
+  .date-section{margin-top:10px;padding:10px 12px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;}
+  .date-section label{font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:6px;}
+  .date-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .date-row input[type="date"],.date-row input[type="text"]{padding:6px 10px;border-radius:6px;font-size:12px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;}
+  .date-row input[type="date"]{flex:1;} .date-row input[type="text"]{flex:2;}
+  .date-row input:focus{border-color:var(--accent);}
+  .date-row input::placeholder{color:var(--text-muted);}
+  .date-add-btn{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;background:var(--accent);color:#fff;border:none;cursor:pointer;}
+  .saved-date{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border);}
+  .saved-date:last-child{border-bottom:none;}
+  .sd-info{display:flex;gap:8px;align-items:center;}
+  .sd-date{color:var(--accent);font-weight:600;font-size:11px;white-space:nowrap;}
+  .sd-memo{color:var(--text-muted);}
+  .sd-del{color:var(--critical);cursor:pointer;font-size:14px;padding:0 4px;background:none;border:none;font-weight:700;}
+
+  /* CALENDAR */
+  .cal-section{padding:16px 20px;}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-nav button{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+  .cal-nav .cal-title{font-size:16px;font-weight:700;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .cal-day-label{text-align:center;font-size:10px;font-weight:600;color:var(--text-muted);padding:6px 0;}
+  .cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 2px;border-radius:8px;font-size:12px;cursor:pointer;transition:background .15s;}
+  .cal-day:hover{background:var(--border);}
+  .cal-day.today{background:var(--cal-today);font-weight:700;}
+  .cal-day.selected{outline:2px solid var(--accent);outline-offset:-2px;}
+  .cal-day.has-event::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--critical);margin-top:2px;}
+  .cal-day.other-month{opacity:.3;}
+  .cal-events{margin-top:16px;}
+  .cal-event-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--critical);}
+  .cal-event-card.user-event{border-left-color:var(--accent);}
+  .cal-event-title{font-size:13px;font-weight:600;}
+  .cal-event-meta{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .cal-event-del{float:right;color:var(--critical);cursor:pointer;font-size:14px;background:none;border:none;font-weight:700;}
+  .cal-no-events{text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;}
+
+  /* ========== SNS PAGE ========== */
+  .sns-layout{display:flex;flex:1;overflow:hidden;height:100%;}
+  .sns-left{flex:1;overflow-y:auto;border-right:1px solid var(--border);min-width:0;}
+  .sns-right{width:380px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;}
+  .sns-header-bar{display:flex;gap:8px;padding:12px 20px;align-items:center;flex-wrap:wrap;}
+  .sns-create-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;background:var(--accent);color:#fff;border:none;cursor:pointer;transition:all .15s;}
+  .sns-create-btn:hover{opacity:.85;}
+  .sns-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 20px 12px;}
+  .sns-stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;}
+  .sns-stat .num{font-size:20px;font-weight:800;}
+  .sns-stat .label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  .sns-stat-scheduled .num{color:var(--purple);}
+  .sns-stat-published .num{color:var(--green);}
+  .sns-stat-draft .num{color:var(--text-muted);}
+
+  .sns-filter-bar{display:flex;gap:6px;padding:4px 20px 8px;overflow-x:auto;scrollbar-width:none;}
+  .sns-filter-bar::-webkit-scrollbar{display:none;}
+
+  .sns-list{padding:8px 16px;}
+
+  /* MONTHLY RECS */
+  .monthly-recs{padding:12px 20px;}
+  .monthly-title{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .rec-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+  .rec-card:hover{border-color:var(--accent);}
+  .rec-card-title{font-size:13px;font-weight:600;}
+  .rec-card-desc{font-size:11px;color:var(--text-muted);margin-top:3px;}
+  .rec-card-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+  .rec-platform-badge{font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;}
+
+  /* CHAT */
+  .chat-panel{display:flex;flex-direction:column;height:100%;background:var(--bg);}
+  .chat-header{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--card);}
+  .chat-header-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .chat-header-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .chat-agent-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;}
+  .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+  .chat-msg{max-width:90%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-break:break-word;white-space:pre-wrap;}
+  .chat-msg.assistant{background:var(--card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;}
+  .chat-msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+  .chat-msg.system{background:var(--purple-bg);color:var(--purple);align-self:center;font-size:11px;font-weight:600;padding:6px 12px;border-radius:16px;}
+  .chat-typing{align-self:flex-start;font-size:12px;color:var(--text-muted);padding:4px 0;}
+  .chat-typing span{animation:blink 1.4s infinite both;}
+  .chat-typing span:nth-child(2){animation-delay:.2s;}
+  .chat-typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:0;}40%{opacity:1;}}
+  .chat-suggestions{display:flex;gap:6px;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--border);background:var(--card);}
+  .chat-suggestion{padding:6px 12px;border-radius:16px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .chat-suggestion:hover{border-color:var(--accent);color:var(--accent);}
+  .chat-input-bar{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--card);}
+  .chat-input{flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;outline:none;font-family:inherit;resize:none;min-height:40px;max-height:100px;}
+  .chat-input:focus{border-color:var(--accent);}
+  .chat-input::placeholder{color:var(--text-muted);}
+  .chat-send{width:40px;height:40px;border-radius:10px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+  .chat-send:hover{opacity:.85;}
+  .chat-send:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* mobile chat toggle */
+  .chat-mobile-toggle{display:none;position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--purple);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+  .chat-mobile-overlay{display:none;position:fixed;inset:0;z-index:160;background:var(--bg);}
+  .chat-mobile-overlay.open{display:flex;flex-direction:column;}
+  .sns-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:all .2s;}
+  .sns-card:hover{border-color:var(--text-muted);}
+  .sns-card-header{padding:14px 16px;display:flex;align-items:flex-start;gap:12px;}
+  .sns-platform{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;font-weight:700;}
+  .sns-platform.instagram{background:var(--pink-bg);color:var(--pink);}
+  .sns-platform.tiktok{background:var(--purple-bg);color:var(--purple);}
+  .sns-platform.youtube{background:var(--critical-bg);color:var(--critical);}
+  .sns-platform.naver{background:var(--green-bg);color:var(--green);}
+  .sns-card-body{flex:1;min-width:0;}
+  .sns-card-title{font-size:14px;font-weight:600;}
+  .sns-card-desc{font-size:12px;color:var(--text-muted);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .sns-card-meta{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  .badge-scheduled{background:var(--purple-bg);color:var(--purple);}
+  .badge-published{background:var(--green-bg);color:var(--green);}
+  .badge-draft{background:rgba(139,148,158,.12);color:var(--text-muted);}
+  .badge-platform{font-size:9px;}
+  .sns-card-actions{display:flex;gap:6px;padding:0 16px 12px;flex-wrap:wrap;}
+  .sns-card-actions button{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--card);color:var(--text-muted);}
+  .sns-card-actions button:hover{border-color:var(--accent);color:var(--accent);}
+  .sns-card-actions .del-btn:hover{border-color:var(--critical);color:var(--critical);}
+
+  /* SNS MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:90%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px;}
+  .modal h2{font-size:16px;font-weight:700;margin-bottom:16px;}
+  .modal-field{margin-bottom:12px;}
+  .modal-field label{display:block;font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+  .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;outline:none;font-family:inherit;}
+  .modal-field input:focus,.modal-field textarea:focus,.modal-field select:focus{border-color:var(--accent);}
+  .modal-field textarea{min-height:80px;resize:vertical;}
+  .modal-field select{appearance:auto;}
+  .platform-checks{display:flex;gap:8px;flex-wrap:wrap;}
+  .platform-check{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;}
+  .platform-check.selected{border-color:var(--accent);background:var(--sidebar-active);}
+  .modal-btns{display:flex;gap:8px;margin-top:16px;}
+  .modal-btns button{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+  .modal-btns .save-btn{background:var(--accent);color:#fff;}
+  .modal-btns .cancel-btn{background:var(--input-bg);color:var(--text-muted);border:1px solid var(--border);}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+  .empty-state .empty-icon{font-size:48px;margin-bottom:12px;}
+  .empty-state p{font-size:13px;max-width:280px;margin:0 auto;}
+
+  /* YEAR CALENDAR */
+  .ucal-year{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  @media(max-width:768px){.ucal-year{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:480px){.ucal-year{grid-template-columns:repeat(1,1fr);}}
+  .ucal-month-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;transition:all .15s;overflow:hidden;}
+  .ucal-month-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .ucal-month-card.current{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .ucal-mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .ucal-mh-name{font-size:13px;font-weight:700;}
+  .ucal-mh-cnt{font-size:10px;color:var(--accent);font-weight:600;}
+  .ucal-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+  .ucal-mini-dow{font-size:7px;text-align:center;color:var(--text-muted);padding:1px 0;}
+  .ucal-mini-d{font-size:8px;text-align:center;padding:2px 0;border-radius:3px;color:var(--text-muted);position:relative;}
+  .ucal-mini-d.today{background:var(--accent);color:#fff;font-weight:700;}
+  .ucal-mini-d.has-ev{font-weight:700;color:var(--text);}
+  .ucal-mini-d.has-ev::after{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--critical);}
+  .ucal-mini-d.today.has-ev::after{background:#fff;}
+  .ucal-mini-d.empty{visibility:hidden;}
+  .ucal-month-events{margin-top:6px;border-top:1px solid var(--border);padding-top:4px;}
+  .ucal-ev-pill{font-size:9px;padding:2px 6px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:1.4;}
+  .ucal-ev-pill.sys{background:var(--critical-bg);color:var(--critical);}
+  .ucal-ev-pill.usr{background:var(--medium-bg);color:var(--medium);}
+  .ucal-ev-more{font-size:9px;color:var(--text-muted);padding:2px 0;}
+
+  .ucal-detail-back{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;margin-bottom:12px;background:none;border:none;padding:0;}
+  .ucal-detail-back:hover{text-decoration:underline;}
+  .ucal-detail-title{font-size:18px;font-weight:800;margin-bottom:12px;}
+  .ucal-detail-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px;}
+  .ucal-detail-dow{font-size:10px;text-align:center;color:var(--text-muted);padding:4px 0;font-weight:600;}
+  .ucal-detail-d{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:13px;cursor:pointer;transition:all .15s;position:relative;max-width:48px;}
+  .ucal-detail-d:hover{background:var(--border);}
+  .ucal-detail-d.today{background:rgba(88,166,255,.2);font-weight:800;}
+  .ucal-detail-d.selected{outline:2px solid var(--accent);outline-offset:-2px;}
+  .ucal-detail-d.has-ev::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--critical);position:absolute;bottom:3px;}
+  .ucal-detail-d.empty{visibility:hidden;}
+
+  /* MENU BRAINSTORM */
+  .menu-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:0 20px 20px;}
+  @media(max-width:900px){.menu-cols{grid-template-columns:1fr;}}
+  @media(max-width:768px){.menu-cols{grid-template-columns:1fr;}.menu-col{min-height:auto;}}
+  .menu-col{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:200px;}
+  .menu-col-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .menu-col-title .mc-dot{width:10px;height:10px;border-radius:50%;}
+  .menu-col.keep .mc-dot{background:var(--green);}
+  .menu-col.cut .mc-dot{background:var(--critical);}
+  .menu-col.add .mc-dot{background:var(--accent);}
+  .menu-item-card{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:grab;transition:all .15s;position:relative;}
+  .menu-item-card:hover{border-color:var(--text-muted);}
+  .menu-item-card.dragging{opacity:.4;}
+  .menu-item-name{font-size:13px;font-weight:600;}
+  .menu-item-price{font-size:11px;color:var(--text-muted);font-family:monospace;}
+  .menu-item-cat{font-size:9px;color:var(--text-muted);background:rgba(139,148,158,.1);padding:1px 6px;border-radius:4px;display:inline-block;margin-top:3px;}
+  .menu-item-ai{margin-top:6px;padding:8px 10px;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.12);border-radius:6px;font-size:11px;color:var(--text-muted);line-height:1.6;display:none;}
+  .menu-item-ai.show{display:block;}
+  .menu-item-actions{display:flex;gap:4px;position:absolute;top:8px;right:8px;}
+  .menu-item-actions button{background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;color:var(--text-muted);transition:color .15s;}
+  .menu-item-actions button:hover{color:var(--text);}
+  .menu-sec-btn{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text-muted);transition:all .15s;}
+  .menu-sec-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .menu-sec-del:hover{border-color:var(--critical);color:var(--critical);}
+  .menu-sec-ai{font-size:12px;color:var(--text-muted);line-height:1.6;padding:0;margin-bottom:8px;white-space:pre-wrap;display:none;}
+  .menu-sec-ai.show{display:block;padding:10px 12px;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.12);border-radius:8px;}
+  .menu-sec-ai .ai-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px;}
+  .menu-sec-ai .ai-body{display:none;}
+  .menu-sec-ai .ai-body.open{display:block;}
+
+  /* HELP BUTTON */
+  .help-fab{position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:22px;font-weight:800;cursor:pointer;z-index:180;box-shadow:0 4px 16px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .help-fab:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(0,0,0,.35);}
+  .guide-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);align-items:center;justify-content:center;}
+  .guide-overlay.open{display:flex;}
+  .guide-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:92%;max-width:560px;max-height:85vh;overflow-y:auto;padding:0;}
+  .guide-modal-header{position:sticky;top:0;background:var(--card);padding:20px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;z-index:1;}
+  .guide-modal-header h2{font-size:17px;font-weight:800;}
+  .guide-close{background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:4px 8px;}
+  .guide-body{padding:20px 24px 28px;}
+  .guide-section{margin-bottom:24px;}
+  .guide-section h3{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .guide-section h3 .g-icon{font-size:18px;}
+  .guide-section p{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:6px;}
+  .guide-section ul{padding-left:18px;margin:6px 0;}
+  .guide-section li{font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .guide-section li strong{color:var(--text);font-weight:600;}
+  .guide-tip{background:var(--medium-bg);border:1px solid rgba(88,166,255,.15);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--medium);margin-top:8px;line-height:1.6;}
+
+  @media(max-width:768px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);z-index:200;}
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-overlay.open{display:block;}
+    .mobile-menu-btn{display:flex;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .sns-stats{grid-template-columns:repeat(3,1fr);}
+    .page-header{padding-left:56px;}
+    .sns-layout{flex-direction:column;}
+    .sns-right{display:none;}
+    .sns-left{border-right:none;}
+    .chat-mobile-toggle{display:flex;align-items:center;justify-content:center;}
+  }
+</style>
+</head>
+<body>
+
+<button class="mobile-menu-btn" onclick="toggleSidebar()">&#9776;</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>&#127472;&#127479; K-Soulfood</h2>
+      <div class="brand-sub">Buena Park, CA &middot; 매장 관리</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">관리</div>
+      <div class="nav-item active" onclick="goPage('compliance')">
+        <span class="nav-icon">&#128203;</span>
+        <span>필수 관리 사항</span>
+        <span class="nav-badge" id="nav-badge-compliance">0</span>
+      </div>
+      <div class="nav-item" onclick="goPage('sns')">
+        <span class="nav-icon">&#128247;</span>
+        <span>SNS 콘텐츠</span>
+        <span class="nav-badge" id="nav-badge-sns" style="background:var(--purple-bg);color:var(--purple);">0</span>
+      </div>
+      <div class="nav-section">전략</div>
+      <div class="nav-item" onclick="goPage('branding')">
+        <span class="nav-icon">&#127775;</span>
+        <span>브랜딩</span>
+      </div>
+      <div class="nav-item" onclick="goPage('menu')">
+        <span class="nav-icon">&#127860;</span>
+        <span>메뉴 기획</span>
+      </div>
+      <div class="nav-section">분석</div>
+      <div class="nav-item" onclick="goPage('sales')">
+        <span class="nav-icon">&#128200;</span>
+        <span>매출 분석</span>
+      </div>
+      <div class="nav-section">도구</div>
+      <div class="nav-item" onclick="goPage('calendar')">
+        <span class="nav-icon">&#128197;</span>
+        <span>캘린더</span>
+      </div>
+      <div class="nav-item" onclick="goPage('settings')">
+        <span class="nav-icon">&#9881;</span>
+        <span>설정</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="theme-lbl" id="theme-label">다크 모드</span>
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- ========== COMPLIANCE PAGE ========== -->
+    <div class="page active" id="page-compliance">
+      <div class="page-header">
+        <div><h1>필수 관리 사항</h1><div class="ph-sub">인허가 &middot; 직원관리 &middot; 운영 &middot; AI 컨설턴트</div></div>
+      </div>
+      <div class="sns-layout">
+        <!-- LEFT: Tasks + Calendar -->
+        <div class="sns-left">
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="compTab('tasks')">작업 목록</button>
+            <button class="sub-tab" onclick="compTab('cal')">캘린더</button>
+          </div>
+          <div id="comp-tasks">
+            <div class="stats">
+              <div class="stat-card stat-critical"><div class="num" id="cnt-critical">0</div><div class="label">긴급</div></div>
+              <div class="stat-card stat-high"><div class="num" id="cnt-high">0</div><div class="label">높음</div></div>
+              <div class="stat-card stat-medium"><div class="num" id="cnt-medium">0</div><div class="label">보통</div></div>
+              <div class="stat-card stat-done"><div class="num" id="cnt-done">0</div><div class="label">완료</div></div>
+            </div>
+            <div class="filters" id="filters"></div>
+            <div class="task-list" id="task-list"></div>
+          </div>
+          <div id="comp-cal" style="display:none;">
+            <div class="cal-section">
+              <div class="cal-nav">
+                <button onclick="calPrev()">&larr; 이전</button>
+                <span class="cal-title" id="cal-title"></span>
+                <button onclick="calNext()">다음 &rarr;</button>
+              </div>
+              <div class="cal-grid" id="cal-grid"></div>
+              <div class="cal-events" id="cal-events"></div>
+            </div>
+          </div>
+        </div>
+        <!-- RIGHT: Compliance Agent -->
+        <div class="sns-right">
+          <div class="chat-panel">
+            <div class="chat-header">
+              <div class="chat-header-title"><span class="chat-agent-dot"></span> 컴플라이언스 에이전트</div>
+              <div class="chat-header-sub">인허가 &middot; 노동법 &middot; 세금 &middot; 안전 전문 AI</div>
+            </div>
+            <div class="chat-messages" id="comp-chat-messages"></div>
+            <div class="chat-suggestions" id="comp-chat-suggestions"></div>
+            <div class="chat-input-bar">
+              <textarea class="chat-input" id="comp-chat-input" placeholder="컴플라이언스 질문을 입력하세요..." rows="1" onkeydown="compChatKeydown(event)"></textarea>
+              <button class="chat-send" onclick="sendCompChat()">&#9654;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile chat toggle for compliance -->
+      <button class="chat-mobile-toggle" onclick="openCompMobileChat()" style="background:var(--accent);">&#128172;</button>
+      <div class="chat-mobile-overlay" id="comp-chat-mobile-overlay">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--card);">
+          <div style="font-size:14px;font-weight:700;">컴플라이언스 에이전트</div>
+          <button onclick="closeCompMobileChat()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <div class="chat-messages" id="comp-chat-messages-mobile" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;"></div>
+        <div class="chat-suggestions" id="comp-chat-suggestions-mobile"></div>
+        <div class="chat-input-bar">
+          <textarea class="chat-input" id="comp-chat-input-mobile" placeholder="컴플라이언스 질문을 입력하세요..." rows="1" onkeydown="compChatKeydownMobile(event)"></textarea>
+          <button class="chat-send" onclick="sendCompChatMobile()">&#9654;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SNS PAGE ========== -->
+    <div class="page" id="page-sns">
+      <div class="page-header">
+        <div><h1>SNS 콘텐츠 관리</h1><div class="ph-sub">오늘의 추천 &middot; 콘텐츠 등록 &middot; 일정 관리</div></div>
+      </div>
+      <div class="page-scroll">
+        <div class="sns-header-bar">
+          <button class="sns-create-btn" onclick="openSnsModal()">+ 새 콘텐츠</button>
+        </div>
+        <div class="sns-stats">
+          <div class="sns-stat sns-stat-scheduled"><div class="num" id="sns-cnt-scheduled">0</div><div class="label">예약됨</div></div>
+          <div class="sns-stat sns-stat-published"><div class="num" id="sns-cnt-published">0</div><div class="label">게시 완료</div></div>
+          <div class="sns-stat sns-stat-draft"><div class="num" id="sns-cnt-draft">0</div><div class="label">임시저장</div></div>
+        </div>
+        <!-- Daily Recommendations -->
+        <div class="monthly-recs" id="monthly-recs"></div>
+        <div class="sns-filter-bar" id="sns-filters"></div>
+        <div class="sns-list" id="sns-list"></div>
+      </div>
+    </div>
+
+    <!-- ========== CALENDAR PAGE ========== -->
+    <div class="page" id="page-calendar">
+      <div class="page-header">
+        <div><h1>통합 캘린더</h1><div class="ph-sub">모든 일정을 한눈에</div></div>
+      </div>
+      <div class="page-scroll" style="padding:16px 20px;">
+        <!-- Quick Add -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="date" id="ucal-add-date" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;">
+          <input type="text" id="ucal-add-title" placeholder="새 일정 입력..." style="flex:1;min-width:180px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;outline:none;">
+          <button onclick="ucalAddEvent()" style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">추가</button>
+        </div>
+        <!-- Year nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <button onclick="ucalYearNav(-1)" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:13px;font-weight:600;">&larr;</button>
+          <span id="ucal-year-title" style="font-size:16px;font-weight:800;"></span>
+          <button onclick="ucalYearNav(1)" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:13px;font-weight:600;">&rarr;</button>
+        </div>
+        <!-- Year grid (12 months) -->
+        <div id="ucal-year-grid"></div>
+        <!-- Month detail (hidden initially) -->
+        <div id="ucal-month-detail" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ========== MENU PAGE ========== -->
+    <div class="page" id="page-menu">
+      <div class="page-header">
+        <div><h1>메뉴 기획</h1><div class="ph-sub">브레인스토밍 &middot; 분류 &middot; AI 피드백</div></div>
+      </div>
+      <div class="page-scroll">
+        <!-- Input area -->
+        <div style="padding:12px 20px;">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;">메뉴 일괄 입력</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">한 줄에 하나씩. 형식: <strong>메뉴명, $가격, 카테고리</strong></div>
+            <textarea id="menu-bulk" placeholder="닭갈비, $22, 메인&#10;소주 (참이슬), $15, 주류&#10;떡볶이, $14, 사이드&#10;해물파전, $18, 안주" style="width:100%;min-height:70px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;resize:vertical;outline:none;line-height:1.7;"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
+              <span style="font-size:11px;font-weight:600;color:var(--text-muted);">추가할 섹션:</span>
+              <select id="menu-bulk-target" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;">
+                <option value="keep">유지 메뉴</option>
+                <option value="add">신규 메뉴</option>
+              </select>
+              <button onclick="menuBulkAdd()" style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;">추가</button>
+            </div>
+          </div>
+          <!-- Single add -->
+          <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="menu-new-name" placeholder="메뉴명" style="flex:2;min-width:120px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;outline:none;">
+            <input type="text" id="menu-new-price" placeholder="$가격" style="flex:1;max-width:80px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;outline:none;">
+            <input type="text" id="menu-new-cat" placeholder="카테고리" style="flex:1;max-width:100px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;outline:none;">
+            <select id="menu-single-target" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;">
+              <option value="keep">유지</option>
+              <option value="add">신규</option>
+            </select>
+            <button onclick="menuAddSingle()" style="padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">추가</button>
+          </div>
+        </div>
+        <!-- 3 columns -->
+        <div class="menu-cols">
+          <div class="menu-col keep" id="menu-col-keep" ondragover="event.preventDefault();this.style.background='var(--green-bg)'" ondragleave="this.style.background=''" ondrop="menuDrop(event,'keep');this.style.background=''">
+            <div class="menu-col-title">
+              <span class="mc-dot"></span> 유지 메뉴 <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" id="menu-cnt-keep">0</span>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;">
+              <button onclick="menuSectionAI('keep')" class="menu-sec-btn" id="menu-ai-keep">AI 피드백</button>
+              <button onclick="menuClearSection('keep')" class="menu-sec-btn menu-sec-del">전체 삭제</button>
+            </div>
+            <div id="menu-ai-keep-result" class="menu-sec-ai"></div>
+            <div id="menu-list-keep"></div>
+          </div>
+          <div class="menu-col cut" id="menu-col-cut" ondragover="event.preventDefault();this.style.background='var(--critical-bg)'" ondragleave="this.style.background=''" ondrop="menuDrop(event,'cut');this.style.background=''">
+            <div class="menu-col-title">
+              <span class="mc-dot"></span> 빼기 <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" id="menu-cnt-cut">0</span>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;">
+              <button onclick="menuSectionAI('cut')" class="menu-sec-btn" id="menu-ai-cut">AI 피드백</button>
+              <button onclick="menuClearSection('cut')" class="menu-sec-btn menu-sec-del">전체 삭제</button>
+            </div>
+            <div id="menu-ai-cut-result" class="menu-sec-ai"></div>
+            <div id="menu-list-cut"></div>
+          </div>
+          <div class="menu-col add" id="menu-col-add" ondragover="event.preventDefault();this.style.background='var(--medium-bg)'" ondragleave="this.style.background=''" ondrop="menuDrop(event,'add');this.style.background=''">
+            <div class="menu-col-title">
+              <span class="mc-dot"></span> 신규 메뉴 <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" id="menu-cnt-add">0</span>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;">
+              <button onclick="menuSectionAI('add')" class="menu-sec-btn" id="menu-ai-add">AI 피드백</button>
+              <button onclick="menuClearSection('add')" class="menu-sec-btn menu-sec-del">전체 삭제</button>
+            </div>
+            <div id="menu-ai-add-result" class="menu-sec-ai"></div>
+            <div id="menu-list-add"></div>
+          </div>
+        </div>
+        <!-- AI Summary -->
+        <div style="padding:0 20px 16px;">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;" id="menu-ai-summary">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:13px;font-weight:700;">AI 메뉴 피드백</div>
+              <button onclick="menuAIFeedbackAll()" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;">&#8635; 분석 요청</button>
+            </div>
+            <div id="menu-ai-result" style="font-size:13px;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;">메뉴를 추가한 후 "AI 전체 피드백 받기"를 클릭하세요.</div>
+          </div>
+        </div>
+        <!-- Follow-up questions -->
+        <div style="padding:0 20px 20px;">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:13px;font-weight:700;">메뉴 팔로우업 질문</div>
+              <button onclick="menuRefreshQuestions()" id="menu-q-refresh" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;">&#8635; 새로고침</button>
+            </div>
+            <div id="menu-questions" style="font-size:13px;color:var(--text-muted);line-height:1.7;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SALES PAGE ========== -->
+    <div class="page" id="page-sales">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="salesTab('dashboard')">매출 대시보드</button>
+        <button class="sub-tab" onclick="salesTab('ai')">AI 분석 및 제안</button>
+      </div>
+      <div id="sales-tab-dashboard" style="flex:1;overflow:hidden;">
+        <iframe id="sales-iframe" src="" style="width:100%;height:100%;border:none;background:var(--bg);" allow="clipboard-write"></iframe>
+      </div>
+      <div id="sales-tab-ai" style="display:none;flex:1;overflow-y:auto;padding:20px;">
+        <!-- Run Analysis -->
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+          <button onclick="runSalesAIAnalysis()" id="sales-ai-run-btn" style="padding:10px 22px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;">매출 데이터 AI 분석 실행</button>
+          <span style="font-size:11px;color:var(--text-muted);">매출 대시보드에 CSV를 먼저 업로드하세요</span>
+        </div>
+        <!-- AI Results -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;" id="sales-ai-grid">
+          <!-- Key Insights -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;grid-column:span 2;">
+            <div style="font-size:14px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px;">&#128161; 핵심 인사이트</div>
+            <div id="sales-ai-insights" style="font-size:13px;color:var(--text-muted);line-height:1.8;white-space:pre-wrap;">분석을 실행하면 결과가 여기에 표시됩니다.</div>
+          </div>
+          <!-- Next Steps -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;">
+            <div style="font-size:14px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px;">&#127919; 넥스트 스텝 추천</div>
+            <div id="sales-ai-nextsteps" style="font-size:13px;color:var(--text-muted);line-height:1.8;white-space:pre-wrap;">—</div>
+          </div>
+          <!-- Weaknesses -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;">
+            <div style="font-size:14px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px;">&#9888; 부족한 점 &middot; 돌아볼 점</div>
+            <div id="sales-ai-weaknesses" style="font-size:13px;color:var(--text-muted);line-height:1.8;white-space:pre-wrap;">—</div>
+          </div>
+        </div>
+        <!-- Follow-up Questions -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px;">&#10067; 팔로우업 질문</div>
+            <button onclick="refreshSalesQuestions()" id="sales-q-refresh" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;">&#8635; 새로고침</button>
+          </div>
+          <div id="sales-ai-questions" style="font-size:13px;color:var(--text-muted);line-height:1.8;">—</div>
+        </div>
+        <!-- Free chat about sales -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;">
+          <div style="font-size:14px;font-weight:800;margin-bottom:10px;">&#128172; 매출 데이터에 대해 질문하기</div>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="sales-ai-q-input" placeholder="예: 주말 매출이 낮은 이유는?" style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')askSalesAI()">
+            <button onclick="askSalesAI()" style="padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">질문</button>
+          </div>
+          <div id="sales-ai-chat" style="margin-top:12px;font-size:13px;color:var(--text);line-height:1.8;white-space:pre-wrap;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== BRANDING PAGE ========== -->
+    <div class="page" id="page-branding">
+      <div class="page-header">
+        <div><h1>브랜딩</h1><div class="ph-sub">비즈니스 모델 캔버스 &middot; 브랜드 전략 &middot; 레퍼런스</div></div>
+      </div>
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="brandTab('canvas')">비즈니스 모델 캔버스</button>
+        <button class="sub-tab" onclick="brandTab('refs')">References</button>
+      </div>
+      <div class="sns-layout">
+        <!-- LEFT: BMC -->
+        <div class="sns-left" id="brand-left">
+          <!-- Canvas Tab -->
+          <div id="brand-canvas" style="padding:16px 20px;">
+            <div id="bmc-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"></div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">추가 내용 입력</div>
+              <div style="display:flex;gap:8px;">
+                <textarea id="bmc-input" placeholder="브랜드에 대한 추가 정보를 입력하세요... (컨셉, 타겟, 차별점 등)" style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;resize:vertical;min-height:60px;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+                <button onclick="sendBmcInput()" style="padding:10px 20px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;align-self:flex-end;">Send</button>
+              </div>
+              <div id="bmc-status" style="font-size:11px;margin-top:6px;color:var(--text-muted);"></div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">메모</div>
+              <textarea id="bmc-memo" placeholder="브랜딩 관련 메모..." style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;resize:vertical;min-height:80px;outline:none;" oninput="saveBmcMemo()"></textarea>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-size:13px;font-weight:700;">팔로우업 질문</div>
+                <button onclick="refreshBmcQuestions()" id="bmc-q-refresh-btn" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">&#8635; 새로고침</button>
+              </div>
+              <div id="bmc-questions"></div>
+            </div>
+          </div>
+          <!-- Refs Tab -->
+          <div id="brand-refs" style="display:none;padding:16px 20px;">
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+              <input type="text" id="ref-url-input" placeholder="이미지 URL 또는 참고 링크 붙여넣기..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
+              <button onclick="addReference()" style="padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">추가</button>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:8px;padding:14px;border:2px dashed var(--border);border-radius:12px;cursor:pointer;text-align:center;justify-content:center;font-size:13px;color:var(--text-muted);transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <span style="font-size:20px;">&#128206;</span> 이미지 파일 업로드 (붙여넣기도 가능)
+                <input type="file" accept="image/*" multiple onchange="addImageFiles(this.files)" style="display:none;">
+              </label>
+            </div>
+            <div id="refs-list"></div>
+          </div>
+        </div>
+        <!-- RIGHT: Agent -->
+        <div class="sns-right">
+          <div class="chat-panel">
+            <div class="chat-header">
+              <div class="chat-header-title"><span class="chat-agent-dot"></span> 브랜딩 에이전트</div>
+              <div class="chat-header-sub">브랜드 전략 &middot; 포지셔닝 &middot; 차별화 AI</div>
+            </div>
+            <div class="chat-messages" id="brand-chat-messages"></div>
+            <div class="chat-suggestions" id="brand-chat-suggestions"></div>
+            <div class="chat-input-bar">
+              <textarea class="chat-input" id="brand-chat-input" placeholder="브랜딩 질문을 입력하세요..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendBrandChat();}"></textarea>
+              <button class="chat-send" onclick="sendBrandChat()">&#9654;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SETTINGS PAGE ========== -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div><h1>설정</h1><div class="ph-sub">API 키 &middot; 테마 &middot; 데이터 관리</div></div>
+      </div>
+      <div class="page-scroll" style="padding:20px;">
+        <!-- API Key -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">AI 에이전트 API 키</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Anthropic API 키를 입력하면 컴플라이언스/마케팅 에이전트가 활성화됩니다.<br>키는 브라우저에만 저장되며 서버로 전송되지 않습니다.</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="password" id="settings-api-key" placeholder="sk-ant-api03-..." style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:monospace;outline:none;">
+            <button onclick="toggleShowApiKey()" style="padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:600;" id="api-key-toggle-btn">보기</button>
+            <button onclick="saveApiKey()" style="padding:10px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">저장</button>
+          </div>
+          <div id="api-key-status" style="font-size:11px;margin-top:8px;"></div>
+        </div>
+        <!-- API Mode -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">API 연결 모드</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">서버 모드: Vercel 서버를 통해 API 호출 (기본값)<br>직접 모드: 브라우저에서 직접 Anthropic API 호출 (API 키 필요)</div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="setApiMode('server')" id="mode-server-btn" style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--card);color:var(--text-muted);transition:all .15s;">서버 모드</button>
+            <button onclick="setApiMode('direct')" id="mode-direct-btn" style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--card);color:var(--text-muted);transition:all .15s;">직접 모드 (API 키)</button>
+          </div>
+        </div>
+        <!-- Theme -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">테마</div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="applyTheme('dark')" style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text-muted);">다크 모드</button>
+            <button onclick="applyTheme('light')" style="flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text-muted);">라이트 모드</button>
+          </div>
+        </div>
+        <!-- Data -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">데이터 관리</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">채팅 기록, 체크리스트, 날짜 등 로컬 데이터를 관리합니다.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="clearChatHistory()" style="padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text-muted);">채팅 기록 초기화</button>
+            <button onclick="if(confirm('모든 데이터가 삭제됩니다. 계속하시겠습니까?')){localStorage.clear();location.reload();}" style="padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--critical);background:var(--critical-bg);color:var(--critical);">전체 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HELP FAB -->
+<button class="help-fab" onclick="openGuide()" title="가이드북">?</button>
+
+<!-- GUIDE MODAL -->
+<div class="guide-overlay" id="guide-overlay" onclick="if(event.target===this)closeGuide()">
+  <div class="guide-modal">
+    <div class="guide-modal-header">
+      <h2>K-Soulfood 관리 가이드북</h2>
+      <button class="guide-close" onclick="closeGuide()">&times;</button>
+    </div>
+    <div class="guide-body">
+      <div class="guide-section">
+        <h3><span class="g-icon">&#128203;</span> 필수 관리 사항</h3>
+        <p>미국 캘리포니아 Buena Park에서 한국식 포차를 운영하면서 반드시 관리해야 할 인허가, 직원관리, 운영 사항들을 추적합니다.</p>
+        <ul>
+          <li><strong>작업 목록</strong> — 긴급도순으로 정렬. 체크박스로 완료 표시, 날짜 관리 가능</li>
+          <li><strong>캘린더</strong> — 면허 만료일, 점검일 등을 캘린더에서 한눈에 확인</li>
+          <li><strong>AI 에이전트</strong> — 오른쪽 채팅으로 인허가/노동법/세금 실시간 상담</li>
+        </ul>
+        <div class="guide-tip">빨간 글로우가 뜨는 카드는 마감 14일 이내! 최우선으로 처리하세요.</div>
+      </div>
+      <div class="guide-section">
+        <h3><span class="g-icon">&#128247;</span> SNS 콘텐츠</h3>
+        <p>매장 SNS 콘텐츠를 기획, 예약, 관리합니다.</p>
+        <ul>
+          <li><strong>월별 추천</strong> — 현재 월에 맞는 콘텐츠 아이디어를 자동 추천</li>
+          <li><strong>콘텐츠 등록</strong> — 플랫폼별(IG, TikTok, YouTube, Naver) 게시 예약</li>
+          <li><strong>마케팅 에이전트</strong> — AI가 캡션, 해시태그, 게시 타이밍을 실시간 제안</li>
+        </ul>
+        <div class="guide-tip">추천 카드를 클릭하면 AI에게 자동으로 상세 가이드를 요청합니다.</div>
+      </div>
+      <div class="guide-section">
+        <h3><span class="g-icon">&#128200;</span> 매출 분석</h3>
+        <p>K SOUL FOOD POS 시스템의 CSV 데이터를 업로드하여 매출을 분석합니다.</p>
+        <ul>
+          <li><strong>Revenue Report</strong> — 매출 요약, 카테고리별 분석, 음료/메뉴 상세</li>
+          <li><strong>Line Items</strong> — 주문별 분석, 서버 성과, 시간대 분석, 테이블 회전율</li>
+          <li><strong>CSV 업로드</strong> — 상단 "CSV 업로드" 버튼으로 파일 가져오기</li>
+        </ul>
+        <div class="guide-tip">Revenue Report와 Line Items 탭을 전환하며 다른 관점의 분석을 볼 수 있습니다.</div>
+      </div>
+      <div class="guide-section">
+        <h3><span class="g-icon">&#128197;</span> 통합 캘린더</h3>
+        <p>컴플라이언스 마감일, SNS 게시 예약, 직접 추가한 일정을 모두 한 캘린더에서 관리합니다.</p>
+        <ul>
+          <li>빨간 점이 있는 날짜 = 등록된 일정 있음</li>
+          <li>날짜를 클릭하면 해당일 일정 확인 + 새 일정 추가 가능</li>
+        </ul>
+      </div>
+      <div class="guide-section">
+        <h3><span class="g-icon">&#9881;</span> 설정</h3>
+        <p>AI 에이전트 설정과 데이터를 관리합니다.</p>
+        <ul>
+          <li><strong>API 키</strong> — Anthropic API 키를 직접 입력하여 AI 에이전트 사용</li>
+          <li><strong>서버/직접 모드</strong> — 서버 경유 또는 브라우저 직접 호출 선택</li>
+          <li><strong>데이터 초기화</strong> — 채팅 기록 또는 전체 데이터 리셋</li>
+        </ul>
+      </div>
+      <div class="guide-section">
+        <h3><span class="g-icon">&#128161;</span> 단축키 & 팁</h3>
+        <ul>
+          <li>모든 데이터는 <strong>브라우저 localStorage</strong>에 저장 (서버 전송 없음)</li>
+          <li>다크/라이트 모드는 사이드바 하단 토글 또는 설정에서 전환</li>
+          <li>모바일에서는 좌상단 메뉴 버튼으로 사이드바, 하단 채팅 버튼으로 AI 접근</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SNS Modal -->
+<div class="modal-overlay" id="sns-modal">
+  <div class="modal">
+    <h2 id="sns-modal-title">새 콘텐츠 등록</h2>
+    <div class="modal-field">
+      <label>제목</label>
+      <input type="text" id="sns-f-title" placeholder="예: 신메뉴 출시 리뷰">
+    </div>
+    <div class="modal-field">
+      <label>내용 / 캡션</label>
+      <textarea id="sns-f-desc" placeholder="게시할 내용이나 캡션을 입력하세요..."></textarea>
+    </div>
+    <div class="modal-field">
+      <label>플랫폼</label>
+      <div class="platform-checks" id="sns-f-platforms">
+        <div class="platform-check" data-p="instagram" onclick="togglePlatform(this)">&#128247; Instagram</div>
+        <div class="platform-check" data-p="tiktok" onclick="togglePlatform(this)">&#127909; TikTok</div>
+        <div class="platform-check" data-p="youtube" onclick="togglePlatform(this)">&#9654; YouTube</div>
+        <div class="platform-check" data-p="naver" onclick="togglePlatform(this)">&#128214; Naver</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>상태</label>
+      <select id="sns-f-status">
+        <option value="draft">임시저장</option>
+        <option value="scheduled">예약</option>
+        <option value="published">게시 완료</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>예약 날짜</label>
+      <input type="date" id="sns-f-date">
+    </div>
+    <div class="modal-field">
+      <label>예약 시간</label>
+      <input type="time" id="sns-f-time" value="12:00">
+    </div>
+    <div class="modal-field">
+      <label>해시태그</label>
+      <input type="text" id="sns-f-tags" placeholder="#포차 #부에나파크 #한식">
+    </div>
+    <div class="modal-field">
+      <label>메모</label>
+      <input type="text" id="sns-f-memo" placeholder="촬영 필요, 소재 준비 등...">
+    </div>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeSnsModal()">취소</button>
+      <button class="save-btn" onclick="saveSnsContent()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== TASKS DATA ====================
+const TASKS=[
+  {title:"ABC 주류 면허 갱신",category:"인허가",risk_level:"Critical",due_type:"fixed_date",due_date:null,time_window:"만료 60일 전까지 갱신 필요",risk_description:"유효한 ABC 면허 없이 영업 시 경범죄 — 최대 $1,000 벌금, 6개월 징역, 즉시 영업정지.",what_to_do:"Type 47 또는 Type 48 면허 만료일을 확인하고 CA ABC에 갱신 신청 및 수수료를 납부하세요.",actions:[{label:"면허 상태 확인",type:"external_link",url:"https://www.abc.ca.gov/licensing/license-lookup/"},{label:"갱신 신청",type:"external_link",url:"https://www.abc.ca.gov/licensing/licensing-reports/renewal-applications/"}],checklist:["현재 ABC 면허를 찾아 만료일 확인","ABC에 미해결 위반사항이 없는지 확인","연간 갱신 수수료 납부 (Type 47 기준 $936)","갱신된 면허를 매장 내 눈에 보이는 곳에 게시"],tags:["면허","주류","법률","ABC","긴급"],date_fields:[{label:"면허 만료일",key:"abc_exp"},{label:"갱신 신청일",key:"abc_renew"}]},
+  {title:"RBS 인증 — 주류 서빙 직원 전원",category:"직원관리",risk_level:"Critical",due_type:"recurring",due_date:null,time_window:"채용 후 60일 이내 취득 필수",risk_description:"CA AB 1221법에 의해 RBS 인증 의무화; 미준수 시 ABC 벌금 건당 최대 $3,000 및 면허 정지.",what_to_do:"주류를 서빙하거나 판매하는 모든 직원이 유효한 캘리포니아 RBS 인증을 보유하고 있는지 확인하세요.",actions:[{label:"RBS 교육 시작",type:"external_link",url:"https://www.abc.ca.gov/education/rbs/"}],checklist:["주류를 서빙, 따르거나 판매하는 직원 전원 목록 작성","각 직원이 ABC 승인 RBS 교육을 이수했는지 확인","ABC RBS 시험 합격 여부 확인","모든 RBS 인증서 사본을 매장에 보관","신규 채용 시 60일 리마인더 설정"],tags:["주류","직원","교육","ABC","의무"],date_fields:[{label:"다음 교육 예정일",key:"rbs_next"},{label:"인증 만료일",key:"rbs_exp"}]},
+  {title:"OC 보건 허가증 갱신",category:"인허가",risk_level:"Critical",due_type:"fixed_date",due_date:null,time_window:"만료 30일 전까지 갱신 필요",risk_description:"OC 보건국 허가증 없이 영업 시 즉시 폐쇄 조치 및 $1,000부터 벌금 부과.",what_to_do:"Orange County 보건국을 통해 식품시설 보건 허가증을 만료 전에 갱신하세요.",actions:[{label:"보건 허가증 갱신",type:"external_link",url:"https://www.ochealthinfo.com/about-hca/environmental-health/food-water-and-pools/food-facility-permits"}],checklist:["현재 보건 허가증 만료일 확인","최근 점검에서 미해결 위반사항이 없는지 확인","OC 환경보건과에 갱신 신청서 및 수수료 제출","갱신된 허가증을 고객이 볼 수 있는 곳에 게시"],tags:["보건","허가증","Orange County","점검"],date_fields:[{label:"허가증 만료일",key:"oc_health_exp"},{label:"최근 점검일",key:"oc_health_insp"},{label:"다음 점검 예정일",key:"oc_health_next"}]},
+  {title:"일일 식품 온도 기록",category:"운영",risk_level:"High",due_type:"recurring",due_date:null,time_window:"매 교대 시 — 오픈, 중간, 마감",risk_description:"OC 보건 점검 시 온도 기록 누락 시 등급 B 또는 C로 하락; 반복 위반 시 허가 정지.",what_to_do:"매 교대마다 모든 식품의 냉장 보관(<41°F) 및 온장 보관(>135°F) 온도를 기록하세요.",actions:[{label:"온도 기록하기",type:"checklist"}],checklist:["모든 냉장고/냉동고 온도 확인 및 기록","온장 보관 중인 음식(찌개, 탕 등) 온도 확인 및 기록","위험 온도 구간(41°F–135°F)에 4시간 이상 방치된 식품 폐기","기록지에 서명 및 날짜 기입","완료된 기록지를 최소 2년간 보관"],tags:["식품안전","매일","보건","점검대비"],date_fields:[]},
+  {title:"성희롱 예방 교육",category:"직원관리",risk_level:"Critical",due_type:"recurring",due_date:null,time_window:"채용 후 6개월 이내, 이후 2년마다",risk_description:"SB 1343법에 따라 5인 이상 사업장 필수; 미준수 시 성희롱 소송에서 무제한 민사 배상 책임.",what_to_do:"관리자에게 2시간, 일반 직원에게 1시간의 CRD 인증 프로그램 교육을 실시하세요.",actions:[{label:"무료 CRD 교육",type:"external_link",url:"https://calcivilrights.ca.gov/shpt/"}],checklist:["관리직과 비관리직 직원 구분","관리자 2시간, 일반 직원 1시간 교육 배정","10명 전원 교육 이수 완료 확인","서명된 이수증을 파일에 보관","다음 교육 주기(2년마다) 캘린더에 등록"],tags:["직원","법률","성희롱","주법의무"],date_fields:[{label:"최근 교육 완료일",key:"sh_done"},{label:"다음 교육 예정일",key:"sh_next"}]},
+  {title:"산재보험 (Workers' Comp) 확인",category:"인허가",risk_level:"Critical",due_type:"fixed_date",due_date:null,time_window:"보험 만료 전 즉시 확인",risk_description:"CA에서 산재보험 없이 영업은 형사 범죄; 최대 $100,000 벌금 + 미보험 기간 일당 $1,500.",what_to_do:"산재보험이 유효하고 파트타임 포함 10명 전원이 커버되는지 확인하세요.",actions:[{label:"보험 확인",type:"checklist"}],checklist:["보험사에 연락하여 보험 유효 여부 확인","파트타임 포함 10명 전원 커버 여부 확인","휴게실에 산재보험 안내문(Form 7) 게시","보험 갱신일 확인 후 30일 전 리마인더 설정"],tags:["보험","법률","긴급","주법의무"],date_fields:[{label:"보험 만료일",key:"wc_exp"},{label:"갱신 완료일",key:"wc_renew"}]},
+  {title:"식사 및 휴식 시간 준수",category:"직원관리",risk_level:"High",due_type:"recurring",due_date:null,time_window:"매 교대 시 — 상시 준수",risk_description:"휴식 누락 시 건당 1시간분 추가 임금 발생; CA 요식업 집단 소송은 $50K–$500K+ 규모.",what_to_do:"매 교대마다 5시간 근무 전 30분 식사 휴식, 4시간당 유급 10분 휴식을 보장하세요.",actions:[{label:"휴식 기록 점검",type:"checklist"}],checklist:["POS/타임시스템에서 식사 휴식 기록 여부 확인","5시간 이상 근무 시 30분 식사 휴식 제공 확인","4시간 근무당 유급 10분 휴식 보장 확인","정확히 6시간 근무 시 식사 휴식 면제 동의서 서명","최근 2주간 타임카드에서 누락된 휴식 검토"],tags:["노동법","직원","캘리포니아","임금체불위험"],date_fields:[]},
+  {title:"Buena Park 사업자 면허 갱신",category:"인허가",risk_level:"High",due_type:"fixed_date",due_date:null,time_window:"만료 30일 전까지 갱신 필요",risk_description:"유효한 사업자 면허 없이 영업 시 시 조례 위반으로 벌금 및 강제 폐쇄.",what_to_do:"Buena Park 시청에서 사업자 면허를 만료 전에 갱신하세요.",actions:[{label:"면허 갱신",type:"external_link",url:"https://www.buenapark.com/departments/community-development/business-license"}],checklist:["현재 사업자 면허를 찾아 만료일 확인","상호명과 주소가 현재 영업 상태와 일치하는지 확인","갱신 신청서 제출 및 수수료 납부","갱신된 면허를 매장에 게시"],tags:["면허","시청","Buena Park","연간"],date_fields:[{label:"면허 만료일",key:"bp_lic_exp"},{label:"갱신 완료일",key:"bp_lic_renew"}]},
+  {title:"CUP — 심야 주류 영업 조건 확인",category:"인허가",risk_level:"Critical",due_type:"predicted",due_date:null,time_window:"지금 즉시 준수 여부 확인",risk_description:"Buena Park는 심야 주류 영업에 CUP 필수; 조건 위반 시 허가 취소 및 강제 폐쇄.",what_to_do:"CUP 조건을 검토하고 영업시간, 소음, 수용인원 등 모든 제한사항을 준수하고 있는지 확인하세요.",actions:[{label:"CUP 조건 검토",type:"checklist"}],checklist:["조건부 사용 허가(CUP) 문서 확인","승인된 영업시간과 실제 영업시간 일치 여부 확인","수용인원 한도 게시 및 매일 밤 초과 여부 확인","소음 저감 조치(문 닫기, 음악 볼륨 제한 등) 이행 확인","예정된 CUP 심사 일정 확인"],tags:["허가","심야","Buena Park","주류","용도지역"],date_fields:[{label:"CUP 심사 예정일",key:"cup_review"},{label:"CUP 발급일",key:"cup_issued"}]},
+  {title:"1분기 판매세 신고 — CDTFA",category:"인허가",risk_level:"High",due_type:"fixed_date",due_date:"2026-04-30",time_window:"2026년 4월 30일 마감",risk_description:"지연 신고 시 10% 가산세 + 이자 부과; 반복 시 판매 허가 취소 및 강제 폐쇄.",what_to_do:"CDTFA에 2026년 1분기(1–3월) 판매 및 사용세 신고서를 4월 30일까지 제출하세요.",actions:[{label:"CDTFA 온라인 신고",type:"external_link",url:"https://onlineservices.cdtfa.ca.gov/"}],checklist:["POS 시스템에서 1분기 총 매출 추출 (1–3월)","과세 대상과 비과세 매출 분류","Orange County 판매세율(7.75%) 적용 계산","CDTFA 온라인 포털에서 신고서 제출","접수 확인서 저장"],tags:["세금","분기","CDTFA","긴급","마감"],date_fields:[{label:"신고 완료일",key:"cdtfa_q1_done"}]},
+  {title:"I-9 고용 적격 서류 감사",category:"직원관리",risk_level:"Critical",due_type:"recurring",due_date:null,time_window:"Section 1: 근무 첫날, Section 2: 3영업일 이내",risk_description:"ICE 벌금 건당 $252–$2,507 (초범 기준); 남가주 요식업은 I-9 감사 최우선 대상.",what_to_do:"모든 직원이 Form I-9을 작성하고 적절히 보관하고 있는지 확인하세요.",actions:[{label:"Form I-9 다운로드",type:"external_link",url:"https://www.uscis.gov/i-9"}],checklist:["현재 10명 전원의 I-9 서류 확보","Section 1과 Section 2가 완전히 작성되었는지 확인","증빙 서류가 승인 목록에 해당하는지 확인","만료된 서류가 재확인 없이 보관되고 있지 않은지 점검","I-9은 인사 파일과 분리 보관 (법적 요건)"],tags:["직원","연방법","I-9","감사위험","이민"],date_fields:[{label:"최근 감사일",key:"i9_audit"},{label:"다음 감사 예정일",key:"i9_next"}]},
+  {title:"Cal/OSHA 산재 기록 (Form 300)",category:"인허가",risk_level:"High",due_type:"fixed_date",due_date:null,time_window:"300A 요약서: 2/1–4/30 게시; Form 300은 연중 유지",risk_description:"OSHA 300 기록 미유지 시 건당 $16,131 벌금; Cal/OSHA는 주방 부상으로 요식업 집중 단속.",what_to_do:"OSHA 300 기록을 연중 유지하고, 300A 연간 요약서를 4월 30일까지 게시하세요.",actions:[{label:"OSHA 양식 다운로드",type:"external_link",url:"https://www.osha.gov/recordkeeping/forms"}],checklist:["2026년 모든 산재 사고가 OSHA 300에 기록되었는지 확인","2025년 300A 요약서가 4월 30일까지 게시되어 있는지 확인","주방 부상 추이를 검토하고 안전 프로토콜 업데이트","기록을 법적 요건에 따라 5년간 보관"],tags:["안전","OSHA","캘리포니아","연간"],date_fields:[{label:"300A 게시 시작일",key:"osha_post"},{label:"300A 게시 종료일",key:"osha_post_end"}]},
+  {title:"야외 좌석 허가 점검 (봄철)",category:"시즌",risk_level:"High",due_type:"predicted",due_date:"2026-05-01",time_window:"야외 성수기 전 (5–9월)",risk_description:"무허가 야외 좌석은 시 단속 벌금 및 면허 구역 외 주류 서빙 시 ABC 위반 초래.",what_to_do:"파티오/야외 좌석을 운영한다면 ABC 면허 구역도와 시 허가에 포함되어 있는지 확인하세요.",actions:[{label:"ABC 구역도 확인",type:"checklist"}],checklist:["ABC 면허 구역도에 파티오/야외 영역이 포함되어 있는지 확인","미포함 시 ABC 구역 변경 신청","Buena Park 야외 식당 허가 유효 여부 확인","야외 구역 소방서 수용인원 확인","ADA 접근성 기준 충족 여부 확인"],tags:["시즌","파티오","ABC","봄","허가"],date_fields:[{label:"야외 허가 만료일",key:"patio_exp"}]}
+];
+
+const RISK_LABELS={Critical:'긴급',High:'높음',Medium:'보통'};
+const PLATFORM_ICONS={instagram:'&#128247;',tiktok:'&#127909;',youtube:'&#9654;',naver:'&#128214;'};
+const PLATFORM_NAMES={instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',naver:'Naver'};
+const STATUS_LABELS={draft:'임시저장',scheduled:'예약됨',published:'게시 완료'};
+
+// ==================== STATE ====================
+let S={
+  completedTasks: JSON.parse(localStorage.getItem('rc_completed')||'{}'),
+  completedChecklist: JSON.parse(localStorage.getItem('rc_checklist')||'{}'),
+  taskDates: JSON.parse(localStorage.getItem('rc_dates')||'{}'),
+  customEvents: JSON.parse(localStorage.getItem('rc_custom_events')||'[]'),
+  snsContents: JSON.parse(localStorage.getItem('rc_sns')||'[]'),
+  activeFilter:'전체', openTask:null,
+  calYear:2026, calMonth:3, selectedCalDate:null,
+  cal2Year:2026, cal2Month:3, selectedCal2Date:null,
+  snsFilter:'전체', editingSnsIdx:null
+};
+function save(){
+  localStorage.setItem('rc_completed',JSON.stringify(S.completedTasks));
+  localStorage.setItem('rc_checklist',JSON.stringify(S.completedChecklist));
+  localStorage.setItem('rc_dates',JSON.stringify(S.taskDates));
+  localStorage.setItem('rc_custom_events',JSON.stringify(S.customEvents));
+  localStorage.setItem('rc_sns',JSON.stringify(S.snsContents));
+}
+
+// ==================== THEME ====================
+function getTheme(){return localStorage.getItem('rc_theme')||'dark';}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('theme-label').textContent=t==='dark'?'다크 모드':'라이트 모드';
+  localStorage.setItem('rc_theme',t);
+  // Sync theme to sales iframe
+  const sf=document.getElementById('sales-iframe');
+  if(sf&&sf.contentWindow)try{sf.contentWindow.postMessage({type:'theme',theme:t},'*');}catch(e){}
+}
+function toggleTheme(){applyTheme(getTheme()==='dark'?'light':'dark');}
+applyTheme(getTheme());
+
+// ==================== SIDEBAR / PAGES ====================
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function goPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  if(event&&event.currentTarget)event.currentTarget.classList.add('active');
+  if(p==='calendar')renderCal2();
+  if(p==='sns')renderSns();
+  if(p==='branding'){renderBmc();renderBrandChat();}
+  if(p==='menu')renderMenu();
+  if(p==='sales'){const fr=document.getElementById('sales-iframe');if(!fr.src||fr.src==='about:blank'||!fr.src.includes('sales')){fr.src='sales.html';fr.onload=function(){try{fr.contentWindow.postMessage({type:'theme',theme:getTheme()},'*');}catch(e){}};}else{try{fr.contentWindow.postMessage({type:'theme',theme:getTheme()},'*');}catch(e){}}}
+  if(p==='settings')renderSettings();
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+function compTab(t){
+  document.querySelectorAll('.sub-tab').forEach((b,i)=>b.classList.toggle('active',(t==='tasks'?0:1)===i));
+  document.getElementById('comp-tasks').style.display=t==='tasks'?'block':'none';
+  document.getElementById('comp-cal').style.display=t==='cal'?'block':'none';
+  if(t==='cal')renderCalendar();
+}
+
+// ==================== COMPLIANCE ====================
+function updateStats(){
+  let c=0,h=0,m=0,d=0;
+  TASKS.forEach((t,i)=>{if(S.completedTasks[i]){d++;return;}if(t.risk_level==='Critical')c++;else if(t.risk_level==='High')h++;else m++;});
+  document.getElementById('cnt-critical').textContent=c;
+  document.getElementById('cnt-high').textContent=h;
+  document.getElementById('cnt-medium').textContent=m;
+  document.getElementById('cnt-done').textContent=d;
+  const urgent=TASKS.filter((t,i)=>!S.completedTasks[i]&&t.risk_level==='Critical').length;
+  document.getElementById('nav-badge-compliance').textContent=urgent;
+}
+function renderFilters(){
+  const cats=['전체',...new Set(TASKS.map(t=>t.category))];
+  document.getElementById('filters').innerHTML=cats.map(c=>`<button class="filter-btn ${c===S.activeFilter?'active':''}" onclick="setFilter('${c}')">${c}</button>`).join('');
+}
+function setFilter(c){S.activeFilter=c;renderFilters();renderTasks();}
+function toggleTask(i){S.completedTasks[i]=!S.completedTasks[i];save();updateStats();renderTasks();}
+function toggleOpen(i){S.openTask=S.openTask===i?null:i;renderTasks();}
+function toggleChecklist(ti,ci){const k=ti+'_'+ci;S.completedChecklist[k]=!S.completedChecklist[k];save();renderTasks();}
+function saveTaskDate(ti,key){
+  const d=document.getElementById('td_'+ti+'_'+key).value;
+  const m=document.getElementById('tm_'+ti+'_'+key).value;
+  if(!d)return;if(!S.taskDates[ti])S.taskDates[ti]={};
+  S.taskDates[ti][key]={date:d,memo:m||''};save();renderTasks();
+}
+function deleteTaskDate(ti,key){if(S.taskDates[ti])delete S.taskDates[ti][key];save();renderTasks();}
+function riskBadge(l){const c=l==='Critical'?'badge-critical':l==='High'?'badge-high':'badge-medium';return `<span class="badge ${c}">${RISK_LABELS[l]||l}</span>`;}
+function dueBadge(t){
+  if(t.due_date){const diff=Math.ceil((new Date(t.due_date)-new Date())/864e5);if(diff<=7)return `<span class="badge badge-due">${diff}일 남음</span>`;if(diff<=30)return `<span class="badge badge-recurring">${diff}일 남음</span>`;}
+  if(t.due_type==='recurring')return '<span class="badge badge-recurring">반복</span>';return '';
+}
+function renderTasks(){
+  const list=document.getElementById('task-list');
+  const sorted=TASKS.map((t,i)=>({...t,idx:i})).filter(t=>S.activeFilter==='전체'||t.category===S.activeFilter)
+    .sort((a,b)=>{
+      // completed last
+      if(!!S.completedTasks[a.idx]!==!!S.completedTasks[b.idx])return S.completedTasks[a.idx]?1:-1;
+      // due date urgency first
+      const now=Date.now();
+      const da=a.due_date?Math.ceil((new Date(a.due_date)-now)/864e5):999;
+      const db=b.due_date?Math.ceil((new Date(b.due_date)-now)/864e5):999;
+      const urgA=da<=30?0:1, urgB=db<=30?0:1;
+      if(urgA!==urgB)return urgA-urgB;
+      if(urgA===0&&urgB===0&&da!==db)return da-db;
+      // risk level
+      const r={Critical:0,High:1,Medium:2};
+      if((r[a.risk_level]||3)!==(r[b.risk_level]||3))return(r[a.risk_level]||3)-(r[b.risk_level]||3);
+      return 0;
+    });
+  list.innerHTML=sorted.map(task=>{
+    const done=S.completedTasks[task.idx],isOpen=S.openTask===task.idx,dates=S.taskDates[task.idx]||{},hasDF=task.date_fields&&task.date_fields.length>0;
+    const dateBadges=Object.entries(dates).map(([k,v])=>{const f=(task.date_fields||[]).find(f=>f.key===k);return `<span class="badge badge-date">${f?f.label:k}: ${v.date}</span>`;}).join('');
+    const riskCls=done?'':`risk-${task.risk_level.toLowerCase()}`;
+    const daysLeft=task.due_date?Math.ceil((new Date(task.due_date)-Date.now())/864e5):999;
+    const urgentCls=(!done&&daysLeft<=30)?'urgent-glow':'';
+    const urgentBanner=(!done&&task.risk_level==='Critical')?`<div style="padding:6px 16px 6px 52px;font-size:11px;font-weight:700;color:var(--critical);background:var(--critical-bg);display:flex;align-items:center;gap:6px;"><span style="font-size:14px;">&#9888;</span> 긴급 — 미처리 시 영업정지/벌금 위험${daysLeft<=30?' &middot; D-'+daysLeft:''}</div>`:
+      (!done&&daysLeft<=30)?`<div style="padding:6px 16px 6px 52px;font-size:11px;font-weight:700;color:var(--high);background:var(--high-bg);display:flex;align-items:center;gap:6px;"><span style="font-size:14px;">&#9200;</span> 마감 D-${daysLeft}</div>`:'';
+    return `<div class="task-card ${done?'completed':''} ${riskCls} ${urgentCls}">
+      ${urgentBanner}
+      <div class="task-header" onclick="toggleOpen(${task.idx})">
+        <div class="task-check ${done?'checked':''}" onclick="event.stopPropagation();toggleTask(${task.idx})"></div>
+        <div class="task-content">
+          <div class="task-title">${task.title}</div>
+          <div class="task-meta">${riskBadge(task.risk_level)}<span class="badge badge-category">${task.category}</span>${dueBadge(task)}${dateBadges}</div>
+          ${task.time_window?`<div class="time-window">${task.time_window}</div>`:''}
+        </div>
+      </div>
+      <div class="task-details ${isOpen?'open':''}">
+        <div class="risk-box"><strong>위험</strong>${task.risk_description}</div>
+        <div class="what-to-do">${task.what_to_do}</div>
+        <div class="action-label">체크리스트</div>
+        ${task.checklist.map((cl,ci)=>{const ck=S.completedChecklist[task.idx+'_'+ci];return `<div class="checklist-item"><div class="cl-check ${ck?'checked':''}" onclick="toggleChecklist(${task.idx},${ci})"></div><span>${cl}</span></div>`;}).join('')}
+        ${hasDF?`<div class="date-section"><label>날짜 관리</label>${task.date_fields.map(f=>{const sv=dates[f.key];return sv?`<div class="saved-date"><div class="sd-info"><span class="sd-date">${sv.date}</span><span class="sd-memo">${f.label}${sv.memo?' - '+sv.memo:''}</span></div><button class="sd-del" onclick="deleteTaskDate(${task.idx},'${f.key}')">&times;</button></div>`:`<div class="date-row"><input type="date" id="td_${task.idx}_${f.key}"><input type="text" id="tm_${task.idx}_${f.key}" placeholder="${f.label} 메모"><button class="date-add-btn" onclick="saveTaskDate(${task.idx},'${f.key}')">저장</button></div>`;}).join('')}</div>`:''}
+        <div class="action-btns">${task.actions.map(a=>a.url?`<a class="action-btn" href="${a.url}" target="_blank" rel="noopener">${a.label} &rarr;</a>`:`<span class="action-btn secondary">${a.label}</span>`).join('')}</div>
+        <div class="tags">${task.tags.map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== COMPLIANCE CALENDAR ====================
+function getAllEvents(){
+  const ev=[];
+  TASKS.forEach((t,i)=>{if(t.due_date)ev.push({date:t.due_date,title:t.title,type:'system',category:t.category});});
+  Object.entries(S.taskDates).forEach(([ti,fields])=>{Object.entries(fields).forEach(([key,val])=>{const task=TASKS[ti];const f=(task.date_fields||[]).find(f=>f.key===key);ev.push({date:val.date,title:`${task.title} - ${f?f.label:key}`,memo:val.memo,type:'user',category:task.category});});});
+  S.customEvents.forEach(e=>ev.push({...e,type:'custom'}));
+  // SNS events
+  S.snsContents.forEach(c=>{if(c.date)ev.push({date:c.date,title:'[SNS] '+c.title,type:'sns',category:c.platforms.join(', ')});});
+  return ev;
+}
+function renderCalHelper(prefix,year,month,selectedDate){
+  const days=['일','월','화','수','목','금','토'];
+  const grid=document.getElementById(prefix+'-grid');
+  const title=document.getElementById(prefix+'-title');
+  title.textContent=`${year}년 ${month+1}월`;
+  const firstDay=new Date(year,month,1).getDay();
+  const dim=new Date(year,month+1,0).getDate();
+  const prevDays=new Date(year,month,0).getDate();
+  const today=new Date();
+  const events=getAllEvents();
+  let html=days.map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+  for(let i=firstDay-1;i>=0;i--)html+=`<div class="cal-day other-month"><span class="day-num">${prevDays-i}</span></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===d;
+    const hasEv=events.some(e=>e.date===ds);
+    const sel=selectedDate===ds;
+    html+=`<div class="cal-day ${isToday?'today':''} ${hasEv?'has-event':''} ${sel?'selected':''}" onclick="${prefix==='cal'?'selectCalDate':'selectCal2Date'}('${ds}')"><span class="day-num">${d}</span></div>`;
+  }
+  const total=firstDay+dim;const rem=(7-total%7)%7;
+  for(let i=1;i<=rem;i++)html+=`<div class="cal-day other-month"><span class="day-num">${i}</span></div>`;
+  grid.innerHTML=html;
+}
+function renderCalEvents(prefix,year,month,selectedDate){
+  const el=document.getElementById(prefix+'-events');
+  const events=getAllEvents();
+  let filtered=selectedDate?events.filter(e=>e.date===selectedDate):events.filter(e=>{const d=new Date(e.date);return d.getFullYear()===year&&d.getMonth()===month;});
+  filtered.sort((a,b)=>a.date.localeCompare(b.date));
+  const addForm=selectedDate?`<div style="text-align:center;margin-bottom:12px;"><input type="text" id="${prefix}_ce_title" placeholder="새 일정 추가..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;width:65%;"><button class="date-add-btn" onclick="addCustomEvent('${selectedDate}','${prefix}')" style="margin-left:6px;">추가</button></div>`:'';
+  if(!filtered.length){el.innerHTML=addForm+`<div class="cal-no-events">${selectedDate?'이 날짜에 등록된 일정이 없습니다':'이번 달 등록된 일정이 없습니다'}</div>`;return;}
+  el.innerHTML=addForm+filtered.map(e=>`<div class="cal-event-card ${e.type!=='system'?'user-event':''}">
+    ${e.type==='custom'?`<button class="cal-event-del" onclick="delCustomEvent(${S.customEvents.indexOf(e)})">&times;</button>`:''}
+    <div class="cal-event-title">${e.title}</div>
+    <div class="cal-event-meta">${e.date} ${e.memo?'&middot; '+e.memo:''} ${e.category?'&middot; '+e.category:''}</div>
+  </div>`).join('');
+}
+function renderCalendar(){renderCalHelper('cal',S.calYear,S.calMonth,S.selectedCalDate);renderCalEvents('cal',S.calYear,S.calMonth,S.selectedCalDate);}
+function selectCalDate(ds){S.selectedCalDate=S.selectedCalDate===ds?null:ds;renderCalendar();}
+function calPrev(){S.calMonth--;if(S.calMonth<0){S.calMonth=11;S.calYear--;}S.selectedCalDate=null;renderCalendar();}
+function calNext(){S.calMonth++;if(S.calMonth>11){S.calMonth=0;S.calYear++;}S.selectedCalDate=null;renderCalendar();}
+function addCustomEvent(date,prefix){const el=document.getElementById(prefix+'_ce_title');if(!el||!el.value.trim())return;S.customEvents.push({date,title:el.value.trim(),memo:'',category:'직접 추가'});save();if(prefix==='cal')renderCalendar();else renderCal2();}
+function delCustomEvent(idx){if(idx>=0){S.customEvents.splice(idx,1);save();renderCalendar();renderCal2();}}
+
+// ==================== UNIFIED CALENDAR (YEAR VIEW) ====================
+let ucalYear=2026;
+let ucalOpenMonth=null; // null=year view, 0-11=month detail
+let ucalSelectedDate=null;
+
+function ucalYearNav(d){ucalYear+=d;ucalOpenMonth=null;ucalSelectedDate=null;renderCal2();}
+
+function renderCal2(){
+  document.getElementById('ucal-year-title').textContent=ucalYear+'년';
+  if(ucalOpenMonth!==null){renderUcalMonthDetail();return;}
+  document.getElementById('ucal-year-grid').style.display='';
+  document.getElementById('ucal-month-detail').style.display='none';
+  const events=getAllEvents();
+  const today=new Date();
+  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dows=['일','월','화','수','목','금','토'];
+  document.getElementById('ucal-year-grid').innerHTML=`<div class="ucal-year">${Array.from({length:12},(_, m)=>{
+    const firstDay=new Date(ucalYear,m,1).getDay();
+    const dim=new Date(ucalYear,m+1,0).getDate();
+    const isCurrent=today.getFullYear()===ucalYear&&today.getMonth()===m;
+    const monthEvents=events.filter(e=>{const d=new Date(e.date);return d.getFullYear()===ucalYear&&d.getMonth()===m;});
+    const evCount=monthEvents.length;
+    let cells=dows.map(d=>`<div class="ucal-mini-dow">${d}</div>`).join('');
+    for(let i=0;i<firstDay;i++)cells+=`<div class="ucal-mini-d empty">.</div>`;
+    for(let d=1;d<=dim;d++){
+      const ds=`${ucalYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday=isCurrent&&today.getDate()===d;
+      const hasEv=events.some(e=>e.date===ds);
+      cells+=`<div class="ucal-mini-d${isToday?' today':''}${hasEv?' has-ev':''}">${d}</div>`;
+    }
+    const previewEvs=monthEvents.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
+    const evPreview=previewEvs.length?`<div class="ucal-month-events">${previewEvs.map(e=>{
+      const dd=e.date.split('-')[2];
+      const cls=e.type==='system'?'sys':'usr';
+      return `<span class="ucal-ev-pill ${cls}">${dd}일 ${e.title}</span>`;
+    }).join('')}${evCount>3?`<span class="ucal-ev-more">+${evCount-3}건 더</span>`:''}</div>`:'';
+    return `<div class="ucal-month-card${isCurrent?' current':''}" onclick="ucalOpenMonthView(${m})">
+      <div class="ucal-mh"><span class="ucal-mh-name">${months[m]}</span>${evCount?`<span class="ucal-mh-cnt">${evCount}건</span>`:''}</div>
+      <div class="ucal-mini-grid">${cells}</div>
+      ${evPreview}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function ucalOpenMonthView(m){ucalOpenMonth=m;ucalSelectedDate=null;renderCal2();}
+
+function renderUcalMonthDetail(){
+  document.getElementById('ucal-year-grid').style.display='none';
+  const el=document.getElementById('ucal-month-detail');
+  el.style.display='block';
+  const m=ucalOpenMonth;
+  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dows=['일','월','화','수','목','금','토'];
+  const firstDay=new Date(ucalYear,m,1).getDay();
+  const dim=new Date(ucalYear,m+1,0).getDate();
+  const today=new Date();
+  const events=getAllEvents();
+
+  let cells=dows.map(d=>`<div class="ucal-detail-dow">${d}</div>`).join('');
+  for(let i=0;i<firstDay;i++)cells+=`<div class="ucal-detail-d empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${ucalYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=today.getFullYear()===ucalYear&&today.getMonth()===m&&today.getDate()===d;
+    const hasEv=events.some(e=>e.date===ds);
+    const sel=ucalSelectedDate===ds;
+    cells+=`<div class="ucal-detail-d${isToday?' today':''}${hasEv?' has-ev':''}${sel?' selected':''}" onclick="ucalSelectDate('${ds}')">${d}</div>`;
+  }
+
+  // Events for this month or selected date
+  let filtered=ucalSelectedDate?events.filter(e=>e.date===ucalSelectedDate):events.filter(e=>{const d=new Date(e.date);return d.getFullYear()===ucalYear&&d.getMonth()===m;});
+  filtered.sort((a,b)=>a.date.localeCompare(b.date));
+
+  el.innerHTML=`
+    <button class="ucal-detail-back" onclick="ucalOpenMonth=null;ucalSelectedDate=null;renderCal2();">&larr; ${ucalYear}년 전체보기</button>
+    <div class="ucal-detail-title">${ucalYear}년 ${months[m]}</div>
+    <div class="ucal-detail-grid" style="max-width:360px;">${cells}</div>
+    ${ucalSelectedDate?`<div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="ucal-day-add" placeholder="이 날짜에 일정 추가..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;outline:none;">
+      <button onclick="ucalAddToDate()" style="padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;">추가</button>
+    </div>`:''}
+    ${filtered.length?filtered.map(e=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;border-left:3px solid ${e.type==='system'?'var(--critical)':'var(--accent)'};">
+        ${e.type==='custom'?`<button onclick="ucalDelCustom(${S.customEvents.indexOf(e)})" style="float:right;background:none;border:none;color:var(--critical);font-size:14px;cursor:pointer;font-weight:700;">&times;</button>`:''}
+        <div style="font-size:13px;font-weight:600;">${e.title}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${e.date}${e.memo?' &middot; '+e.memo:''}${e.category?' &middot; '+e.category:''}</div>
+      </div>
+    `).join(''):`<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0;">${ucalSelectedDate?'이 날짜에 일정이 없습니다':'이번 달 일정이 없습니다'}</div>`}
+  `;
+}
+
+function ucalSelectDate(ds){ucalSelectedDate=ucalSelectedDate===ds?null:ds;renderCal2();}
+function ucalAddEvent(){
+  const date=document.getElementById('ucal-add-date').value;
+  const title=document.getElementById('ucal-add-title').value.trim();
+  if(!date||!title)return;
+  S.customEvents.push({date,title,memo:'',category:'직접 추가'});
+  save();document.getElementById('ucal-add-title').value='';renderCal2();
+}
+function ucalAddToDate(){
+  const el=document.getElementById('ucal-day-add');
+  if(!el||!el.value.trim()||!ucalSelectedDate)return;
+  S.customEvents.push({date:ucalSelectedDate,title:el.value.trim(),memo:'',category:'직접 추가'});
+  save();renderCal2();
+}
+function ucalDelCustom(idx){if(idx>=0){S.customEvents.splice(idx,1);save();renderCal2();}}
+
+// ==================== SNS ====================
+function updateSnsBadge(){
+  const cnt=S.snsContents.filter(c=>c.status==='scheduled').length;
+  document.getElementById('nav-badge-sns').textContent=cnt;
+}
+function renderSnsStats(){
+  document.getElementById('sns-cnt-scheduled').textContent=S.snsContents.filter(c=>c.status==='scheduled').length;
+  document.getElementById('sns-cnt-published').textContent=S.snsContents.filter(c=>c.status==='published').length;
+  document.getElementById('sns-cnt-draft').textContent=S.snsContents.filter(c=>c.status==='draft').length;
+}
+function renderSnsFilters(){
+  const cats=['전체','예약됨','게시 완료','임시저장'];
+  document.getElementById('sns-filters').innerHTML=cats.map(c=>`<button class="filter-btn ${c===S.snsFilter?'active':''}" onclick="setSnsFilter('${c}')">${c}</button>`).join('');
+}
+function setSnsFilter(f){S.snsFilter=f;renderSnsFilters();renderSnsList();}
+function renderSnsList(){
+  const list=document.getElementById('sns-list');
+  const statusMap={'예약됨':'scheduled','게시 완료':'published','임시저장':'draft'};
+  let filtered=S.snsContents.map((c,i)=>({...c,idx:i}));
+  if(S.snsFilter!=='전체')filtered=filtered.filter(c=>c.status===statusMap[S.snsFilter]);
+  filtered.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!filtered.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">&#128247;</div><p>등록된 콘텐츠가 없습니다.<br>"+ 새 콘텐츠" 버튼으로 시작하세요.</p></div>`;return;}
+  list.innerHTML=filtered.map(c=>{
+    const statusCls=c.status==='scheduled'?'badge-scheduled':c.status==='published'?'badge-published':'badge-draft';
+    const platIcons=c.platforms.map(p=>`<span class="sns-platform ${p}" style="width:24px;height:24px;font-size:12px;border-radius:6px;display:inline-flex;">${PLATFORM_ICONS[p]||''}</span>`).join('');
+    return `<div class="sns-card">
+      <div class="sns-card-header">
+        <div style="display:flex;gap:4px;">${platIcons}</div>
+        <div class="sns-card-body">
+          <div class="sns-card-title">${c.title}</div>
+          <div class="sns-card-desc">${c.description||''}</div>
+          <div class="sns-card-meta">
+            <span class="badge ${statusCls}">${STATUS_LABELS[c.status]}</span>
+            ${c.date?`<span class="badge badge-date">${c.date}${c.time?' '+c.time:''}</span>`:''}
+            ${c.hashtags?`<span style="font-size:10px;color:var(--text-muted);">${c.hashtags}</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div class="sns-card-actions">
+        <button onclick="editSns(${c.idx})">수정</button>
+        ${c.status==='draft'?`<button onclick="changeSnsStatus(${c.idx},'scheduled')">예약하기</button>`:''}
+        ${c.status==='scheduled'?`<button onclick="changeSnsStatus(${c.idx},'published')">게시 완료</button>`:''}
+        <button class="del-btn" onclick="deleteSns(${c.idx})">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderSns(){renderSnsStats();renderSnsFilters();renderSnsList();updateSnsBadge();renderMonthlyRecs();}
+function togglePlatform(el){el.classList.toggle('selected');}
+function openSnsModal(idx){
+  S.editingSnsIdx=idx!==undefined?idx:null;
+  const modal=document.getElementById('sns-modal');
+  document.getElementById('sns-modal-title').textContent=S.editingSnsIdx!==null?'콘텐츠 수정':'새 콘텐츠 등록';
+  // reset
+  document.getElementById('sns-f-title').value='';
+  document.getElementById('sns-f-desc').value='';
+  document.getElementById('sns-f-status').value='draft';
+  document.getElementById('sns-f-date').value='';
+  document.getElementById('sns-f-time').value='12:00';
+  document.getElementById('sns-f-tags').value='';
+  document.getElementById('sns-f-memo').value='';
+  document.querySelectorAll('.platform-check').forEach(el=>el.classList.remove('selected'));
+  if(S.editingSnsIdx!==null){
+    const c=S.snsContents[S.editingSnsIdx];
+    document.getElementById('sns-f-title').value=c.title;
+    document.getElementById('sns-f-desc').value=c.description||'';
+    document.getElementById('sns-f-status').value=c.status;
+    document.getElementById('sns-f-date').value=c.date||'';
+    document.getElementById('sns-f-time').value=c.time||'12:00';
+    document.getElementById('sns-f-tags').value=c.hashtags||'';
+    document.getElementById('sns-f-memo').value=c.memo||'';
+    document.querySelectorAll('.platform-check').forEach(el=>{if(c.platforms.includes(el.dataset.p))el.classList.add('selected');});
+  }
+  modal.classList.add('open');
+}
+function closeSnsModal(){document.getElementById('sns-modal').classList.remove('open');}
+function saveSnsContent(){
+  const title=document.getElementById('sns-f-title').value.trim();
+  if(!title){alert('제목을 입력하세요.');return;}
+  const platforms=[];document.querySelectorAll('.platform-check.selected').forEach(el=>platforms.push(el.dataset.p));
+  if(!platforms.length){alert('플랫폼을 하나 이상 선택하세요.');return;}
+  const obj={
+    title,
+    description:document.getElementById('sns-f-desc').value,
+    platforms,
+    status:document.getElementById('sns-f-status').value,
+    date:document.getElementById('sns-f-date').value,
+    time:document.getElementById('sns-f-time').value,
+    hashtags:document.getElementById('sns-f-tags').value,
+    memo:document.getElementById('sns-f-memo').value,
+    createdAt:new Date().toISOString()
+  };
+  if(S.editingSnsIdx!==null){S.snsContents[S.editingSnsIdx]={...S.snsContents[S.editingSnsIdx],...obj};}
+  else{S.snsContents.push(obj);}
+  save();closeSnsModal();renderSns();
+}
+function editSns(idx){openSnsModal(idx);}
+function deleteSns(idx){S.snsContents.splice(idx,1);save();renderSns();}
+function changeSnsStatus(idx,status){S.snsContents[idx].status=status;save();renderSns();}
+
+// ==================== MONTHLY RECOMMENDATIONS ====================
+const MONTHLY_RECS = {
+  1:[
+    {title:"새해 포차 감성 릴스",desc:"포차 네온 조명 + 새해 건배 장면 숏폼",platforms:["instagram","tiktok"],format:"릴스/숏폼"},
+    {title:"겨울 한정 메뉴 소개",desc:"뜨끈한 찌개/전골 클로즈업 ASMR",platforms:["instagram","youtube"],format:"카루셀"},
+    {title:"신년 할인 이벤트 공지",desc:"1월 한정 소주 보틀 할인 프로모션",platforms:["instagram","naver"],format:"이미지"}
+  ],
+  2:[
+    {title:"발렌타인 커플 세트 메뉴",desc:"2인 세트 메뉴 + 분위기 있는 포차 데이트",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"설날 특집 콘텐츠",desc:"한국 설 음식 + 포차에서 즐기는 명절",platforms:["instagram","naver"],format:"카루셀"},
+    {title:"직원 소개 시리즈",desc:"우리 매장 사람들 — 친근감 UP",platforms:["tiktok","instagram"],format:"숏폼"}
+  ],
+  3:[
+    {title:"봄 신메뉴 티저",desc:"봄 한정 메뉴 출시 예고 + 카운트다운",platforms:["instagram","tiktok"],format:"스토리+릴스"},
+    {title:"화이트데이 이벤트",desc:"디저트 서비스 + 태그 이벤트",platforms:["instagram"],format:"이미지"},
+    {title:"포차 브이로그",desc:"영업 시작부터 마감까지 — 하루 브이로그",platforms:["youtube","tiktok"],format:"브이로그"}
+  ],
+  4:[
+    {title:"벚꽃 시즌 야외석 오픈",desc:"파티오 오픈 알림 + 봄밤 포차 감성",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"봄 칵테일/하이볼 메뉴",desc:"시즌 한정 음료 비주얼 촬영",platforms:["instagram"],format:"카루셀"},
+    {title:"4월 인기 메뉴 TOP 5",desc:"이달의 베스트셀러 소개",platforms:["instagram","naver"],format:"카루셀"},
+    {title:"주방 비하인드",desc:"요리 과정 ASMR 숏폼",platforms:["tiktok","youtube"],format:"숏폼"}
+  ],
+  5:[
+    {title:"어버이날 가족 모임 패키지",desc:"가족 단체석 + 어버이날 서비스 메뉴",platforms:["instagram","naver"],format:"이미지"},
+    {title:"메모리얼데이 연휴 이벤트",desc:"연휴 특별 운영시간 + 프로모션",platforms:["instagram"],format:"스토리"},
+    {title:"손님 리뷰 리그램",desc:"고객 후기 UGC 콘텐츠 활용",platforms:["instagram"],format:"스토리"}
+  ],
+  6:[
+    {title:"여름 시원한 메뉴 특집",desc:"냉면, 물회, 맥주 타워 등 시원한 메뉴",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"해피아워 프로모션",desc:"평일 해피아워 소개 — 시간대별 할인",platforms:["instagram","naver"],format:"이미지"},
+    {title:"포차 먹방 챌린지",desc:"대식 챌린지 or 매운맛 도전",platforms:["tiktok","youtube"],format:"숏폼"}
+  ],
+  7:[
+    {title:"독립기념일 파티",desc:"7/4 특별 이벤트 + 데코레이션",platforms:["instagram"],format:"스토리+릴스"},
+    {title:"여름 성수기 예약 안내",desc:"주말 예약 필수 공지 + 웨이팅 팁",platforms:["instagram","naver"],format:"이미지"},
+    {title:"시그니처 메뉴 소개",desc:"우리 매장 대표 메뉴 딥다이브",platforms:["youtube","instagram"],format:"브이로그"}
+  ],
+  8:[
+    {title:"피서 대신 포차",desc:"에어컨 빵빵한 포차에서 여름나기",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"라이트 메뉴 추천",desc:"여름철 가벼운 안주 추천",platforms:["instagram"],format:"카루셀"},
+    {title:"직원 추천 메뉴",desc:"스태프 픽 — 숨은 메뉴 공개",platforms:["tiktok"],format:"숏폼"}
+  ],
+  9:[
+    {title:"추석 특집 콘텐츠",desc:"한가위 분위기 + 전통 안주 메뉴",platforms:["instagram","naver"],format:"카루셀"},
+    {title:"가을 메뉴 전환",desc:"가을 한정 메뉴 출시 알림",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"단골 고객 인터뷰",desc:"우리 매장 단골님 이야기",platforms:["youtube","instagram"],format:"브이로그"}
+  ],
+  10:[
+    {title:"할로윈 포차 파티",desc:"코스튬 이벤트 + 할로윈 특별 메뉴",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"가을 밤 포차 감성",desc:"선선한 밤 + 포차 조명 무드",platforms:["instagram"],format:"릴스"},
+    {title:"10월 프로모션 안내",desc:"가을 맞이 특별 할인",platforms:["instagram","naver"],format:"이미지"}
+  ],
+  11:[
+    {title:"추수감사절 모임 패키지",desc:"단체 예약 + 홀리데이 메뉴",platforms:["instagram","naver"],format:"이미지"},
+    {title:"연말 예약 오픈",desc:"12월 송년회/크리스마스 예약 시작",platforms:["instagram"],format:"스토리"},
+    {title:"1년 돌아보기",desc:"올해 베스트 모먼트 모음",platforms:["instagram","tiktok"],format:"릴스"}
+  ],
+  12:[
+    {title:"크리스마스 이벤트",desc:"크리스마스 데코 + 특별 메뉴 + 커플석",platforms:["instagram","tiktok"],format:"릴스"},
+    {title:"송년회 패키지",desc:"단체 송년회 프로모션 안내",platforms:["instagram","naver"],format:"카루셀"},
+    {title:"연말 감사 메시지",desc:"한 해 감사 인사 + 새해 예고",platforms:["instagram"],format:"스토리"}
+  ]
+};
+
+function getDailyRecs(){
+  const now=new Date();
+  const month=now.getMonth()+1;
+  const dayOfYear=Math.floor((now-new Date(now.getFullYear(),0,0))/(864e5));
+  const allPool=[
+    ...((MONTHLY_RECS[month]||[]).map(r=>({...r,src:'월별'}))),
+    {title:"오늘의 메뉴 클로즈업",desc:"가장 인기 있는 메뉴를 감성적으로 촬영. 음식이 나오는 순간의 김 오르는 장면",platforms:["instagram","tiktok"],format:"릴스",src:'매일'},
+    {title:"주방 비하인드 숏폼",desc:"셰프가 요리하는 과정 15초 ASMR — 칼질, 불꽃, 소스 뿌리기",platforms:["tiktok","instagram"],format:"숏폼",src:'매일'},
+    {title:"포차 분위기 릴스",desc:"네온 조명 + 소주잔 건배 + 웃음소리. 포차 감성 15초",platforms:["instagram","tiktok"],format:"릴스",src:'매일'},
+    {title:"오늘의 추천 조합",desc:"메뉴 + 음료 페어링 추천. '이 안주에는 이 술이 찰떡!'",platforms:["instagram"],format:"카루셀",src:'매일'},
+    {title:"고객 후기 리그램",desc:"고객 태그/리뷰를 스토리로 공유. UGC 콘텐츠 활용",platforms:["instagram"],format:"스토리",src:'매일'},
+    {title:"스태프 추천 메뉴",desc:"직원이 직접 소개하는 숨은 메뉴 or 꿀조합",platforms:["tiktok"],format:"숏폼",src:'매일'},
+    {title:"Before & After 세팅",desc:"영업 전 준비 과정 → 손님으로 꽉 찬 매장. 타임랩스",platforms:["instagram","tiktok"],format:"릴스",src:'매일'},
+    {title:"이번 주 이벤트 공지",desc:"해피아워, 할인, 특별 메뉴 등 이번 주 이벤트 안내",platforms:["instagram","naver"],format:"이미지",src:'매일'},
+    {title:"맛있게 먹는 법 가이드",desc:"쌈 싸는 법, 소스 활용법 등 먹는 팁 콘텐츠",platforms:["tiktok","youtube"],format:"숏폼",src:'매일'},
+    {title:"Naver 블로그 리뷰 요청",desc:"네이버 블로그 리뷰 이벤트. 리뷰 작성 시 음료 서비스",platforms:["naver","instagram"],format:"이미지",src:'매일'},
+    {title:"소주 비교 테스트",desc:"참이슬 vs 처음처럼 vs 좋은데이 — 직원들의 솔직 리뷰",platforms:["tiktok","youtube"],format:"숏폼",src:'매일'},
+    {title:"단골 고객 인터뷰",desc:"우리 매장 단골님 짧은 인터뷰. 왜 여기를 좋아하는지",platforms:["instagram","youtube"],format:"브이로그",src:'매일'},
+    {title:"메뉴 개발 과정",desc:"신메뉴 개발 비하인드 — 시행착오부터 완성까지",platforms:["youtube","tiktok"],format:"브이로그",src:'매일'}
+  ];
+  // Shuffle deterministically by day
+  const shuffled=[...allPool];
+  for(let i=shuffled.length-1;i>0;i--){const j=(dayOfYear*31+i*7)%shuffled.length;[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  return shuffled.slice(0,10);
+}
+
+function renderMonthlyRecs(){
+  const el=document.getElementById('monthly-recs');
+  const recs=getDailyRecs();
+  const now=new Date();
+  const fmtColors={릴스:'--pink','숏폼':'--purple','카루셀':'--accent','이미지':'--green','스토리':'--orange','브이로그':'--critical','스토리+릴스':'--pink'};
+  el.innerHTML=`
+    <div class="monthly-title">&#128161; ${now.getMonth()+1}/${now.getDate()} 오늘의 추천 콘텐츠</div>
+    ${recs.map((r,i)=>`
+      <div class="rec-card" onclick="copyRecToNew(${i})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="rec-card-title">${r.title}</div>
+            <div class="rec-card-desc">${r.desc}</div>
+          </div>
+          <span style="font-size:9px;color:var(--text-muted);background:rgba(139,148,158,.08);padding:2px 6px;border-radius:4px;white-space:nowrap;">${r.src}</span>
+        </div>
+        <div class="rec-card-tags">
+          <span class="rec-platform-badge" style="background:var(${fmtColors[r.format]||'--accent'}-bg,var(--medium-bg));color:var(${fmtColors[r.format]||'--accent'},var(--medium));">${r.format}</span>
+          ${r.platforms.map(p=>`<span class="rec-platform-badge" style="background:rgba(139,148,158,.08);color:var(--text-muted);">${PLATFORM_NAMES[p]||p}</span>`).join('')}
+          <span style="font-size:9px;color:var(--accent);margin-left:auto;cursor:pointer;">클릭하여 등록 &rarr;</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function copyRecToNew(idx){
+  const recs=getDailyRecs();
+  const r=recs[idx];
+  openSnsModal();
+  setTimeout(()=>{
+    document.getElementById('sns-f-title').value=r.title;
+    document.getElementById('sns-f-desc').value=r.desc;
+    document.querySelectorAll('.platform-check').forEach(el=>{
+      if(r.platforms.includes(el.dataset.p))el.classList.add('selected');
+    });
+  },50);
+}
+
+// ==================== CHAT AGENT ====================
+let chatMessages=JSON.parse(localStorage.getItem('rc_chat')||'[]');
+let chatLoading=false;
+
+function saveChatHistory(){localStorage.setItem('rc_chat',JSON.stringify(chatMessages));}
+
+function renderChat(containerId,suggestionsId){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  if(!chatMessages.length){
+    el.innerHTML=`
+      <div class="chat-msg system">마케팅 에이전트에게 무엇이든 물어보세요</div>
+      <div class="chat-msg assistant">안녕하세요! K-Soulfood 전담 마케팅 에이전트입니다.\n\n콘텐츠 기획, 캡션 작성, 해시태그 추천, 게시 타이밍 등 무엇이든 도와드릴게요. 왼쪽의 월별 추천 콘텐츠를 클릭하면 바로 상세 가이드를 받을 수 있어요!</div>
+    `;
+  } else {
+    el.innerHTML=chatMessages.map(m=>`<div class="chat-msg ${m.role}">${escapeHtml(m.content)}</div>`).join('');
+  }
+  if(chatLoading){
+    el.innerHTML+=`<div class="chat-typing"><span>.</span><span>.</span><span>.</span> 생각 중</div>`;
+  }
+  el.scrollTop=el.scrollHeight;
+
+  // Suggestions
+  const sugEl=document.getElementById(suggestionsId);
+  if(sugEl && !chatLoading){
+    const suggestions=['이번 달 콘텐츠 계획 짜줘','인스타 릴스 아이디어 5개','해시태그 추천해줘','TikTok 트렌드 알려줘','캡션 써줘','게시 최적 시간은?'];
+    sugEl.innerHTML=suggestions.map(s=>`<button class="chat-suggestion" onclick="quickChat('${s}')">${s}</button>`).join('');
+  }
+}
+
+function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function doSendChat(inputId,messagesId,suggestionsId){
+  const input=document.getElementById(inputId);
+  const msg=input.value.trim();
+  if(!msg||chatLoading)return;
+  input.value='';
+  input.style.height='40px';
+  chatMessages.push({role:'user',content:msg});
+  chatLoading=true;
+  saveChatHistory();
+  renderChat(messagesId,suggestionsId);
+
+  try{
+    const resp=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:chatMessages})
+    });
+    const data=await resp.json();
+    if(data.error){chatMessages.push({role:'assistant',content:'오류가 발생했습니다: '+data.error});}
+    else{chatMessages.push({role:'assistant',content:data.reply});}
+  }catch(e){
+    chatMessages.push({role:'assistant',content:'네트워크 오류가 발생했습니다. 다시 시도해주세요.'});
+  }
+  chatLoading=false;
+  saveChatHistory();
+  renderChat(messagesId,suggestionsId);
+  // Also sync other chat view
+  renderChat('chat-messages','chat-suggestions');
+  renderChat('chat-messages-mobile','chat-suggestions-mobile');
+}
+
+function sendChat(){doSendChat('chat-input','chat-messages','chat-suggestions');}
+function sendChatMobile(){doSendChat('chat-input-mobile','chat-messages-mobile','chat-suggestions-mobile');}
+function chatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function chatKeydownMobile(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMobile();}}
+function quickChat(msg){document.getElementById('chat-input').value=msg;sendChat();}
+
+function openMobileChat(){document.getElementById('chat-mobile-overlay').classList.add('open');renderChat('chat-messages-mobile','chat-suggestions-mobile');}
+function closeMobileChat(){document.getElementById('chat-mobile-overlay').classList.remove('open');}
+
+// Auto-resize chat input
+document.querySelectorAll('.chat-input').forEach(el=>{
+  el.addEventListener('input',function(){this.style.height='40px';this.style.height=Math.min(this.scrollHeight,100)+'px';});
+});
+
+// ==================== COMPLIANCE CHAT AGENT ====================
+let compChatMessages=JSON.parse(localStorage.getItem('rc_comp_chat')||'[]');
+let compChatLoading=false;
+
+function saveCompChatHistory(){localStorage.setItem('rc_comp_chat',JSON.stringify(compChatMessages));}
+
+function renderCompChat(containerId,suggestionsId){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  if(!compChatMessages.length){
+    el.innerHTML=`
+      <div class="chat-msg system">컴플라이언스 에이전트에게 무엇이든 물어보세요</div>
+      <div class="chat-msg assistant">안녕하세요! K-Soulfood 전담 컴플라이언스 에이전트입니다.\n\n인허가 갱신, 노동법, 세금 신고, 보건 점검, ABC 면허 등 매장 운영에 필요한 법적/행정적 사항을 도와드립니다.\n\n왼쪽 작업 목록의 항목에 대해 궁금한 점이 있으면 편하게 물어보세요!</div>
+    `;
+  } else {
+    el.innerHTML=compChatMessages.map(m=>`<div class="chat-msg ${m.role}">${escapeHtml(m.content)}</div>`).join('');
+  }
+  if(compChatLoading){
+    el.innerHTML+=`<div class="chat-typing"><span>.</span><span>.</span><span>.</span> 생각 중</div>`;
+  }
+  el.scrollTop=el.scrollHeight;
+
+  const sugEl=document.getElementById(suggestionsId);
+  if(sugEl && !compChatLoading){
+    const suggestions=['ABC 면허 갱신 방법','직원 휴식시간 규정','판매세 신고 절차','보건 점검 대비 팁','CUP 조건 위반하면?','I-9 감사 대비 방법'];
+    sugEl.innerHTML=suggestions.map(s=>`<button class="chat-suggestion" onclick="quickCompChat('${s}')">${s}</button>`).join('');
+  }
+}
+
+async function doSendCompChat(inputId,messagesId,suggestionsId){
+  const input=document.getElementById(inputId);
+  const msg=input.value.trim();
+  if(!msg||compChatLoading)return;
+  input.value='';
+  input.style.height='40px';
+  compChatMessages.push({role:'user',content:msg});
+  compChatLoading=true;
+  saveCompChatHistory();
+  renderCompChat(messagesId,suggestionsId);
+
+  try{
+    const resp=await fetch('/api/compliance-chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:compChatMessages})
+    });
+    const data=await resp.json();
+    if(data.error){compChatMessages.push({role:'assistant',content:'오류가 발생했습니다: '+data.error});}
+    else{compChatMessages.push({role:'assistant',content:data.reply});}
+  }catch(e){
+    compChatMessages.push({role:'assistant',content:'네트워크 오류가 발생했습니다. 다시 시도해주세요.'});
+  }
+  compChatLoading=false;
+  saveCompChatHistory();
+  renderCompChat(messagesId,suggestionsId);
+  renderCompChat('comp-chat-messages','comp-chat-suggestions');
+  renderCompChat('comp-chat-messages-mobile','comp-chat-suggestions-mobile');
+}
+
+function sendCompChat(){doSendCompChat('comp-chat-input','comp-chat-messages','comp-chat-suggestions');}
+function sendCompChatMobile(){doSendCompChat('comp-chat-input-mobile','comp-chat-messages-mobile','comp-chat-suggestions-mobile');}
+function compChatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCompChat();}}
+function compChatKeydownMobile(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCompChatMobile();}}
+function quickCompChat(msg){document.getElementById('comp-chat-input').value=msg;sendCompChat();}
+
+function openCompMobileChat(){document.getElementById('comp-chat-mobile-overlay').classList.add('open');renderCompChat('comp-chat-messages-mobile','comp-chat-suggestions-mobile');}
+function closeCompMobileChat(){document.getElementById('comp-chat-mobile-overlay').classList.remove('open');}
+
+// ==================== MENU BRAINSTORM ====================
+let menuItems=JSON.parse(localStorage.getItem('rc_menu_items')||'[]');
+let menuQuestions=JSON.parse(localStorage.getItem('rc_menu_q')||'[]');
+function saveMenuItems(){localStorage.setItem('rc_menu_items',JSON.stringify(menuItems));}
+function saveMenuQuestions(){localStorage.setItem('rc_menu_q',JSON.stringify(menuQuestions));}
+
+function menuBulkAdd(){
+  const txt=document.getElementById('menu-bulk').value.trim();
+  const target=document.getElementById('menu-bulk-target').value;
+  if(!txt)return;
+  txt.split('\n').forEach(line=>{
+    const parts=line.split(',').map(s=>s.trim());
+    if(!parts[0])return;
+    menuItems.push({name:parts[0],price:parts[1]||'',category:parts[2]||'',status:target,aiFeedback:'',id:Date.now()+Math.random()});
+  });
+  saveMenuItems();document.getElementById('menu-bulk').value='';renderMenu();
+}
+
+function menuAddSingle(){
+  const name=document.getElementById('menu-new-name').value.trim();
+  if(!name)return;
+  const price=document.getElementById('menu-new-price').value.trim();
+  const cat=document.getElementById('menu-new-cat').value.trim();
+  const target=document.getElementById('menu-single-target').value;
+  menuItems.push({name,price,category:cat,status:target,aiFeedback:'',id:Date.now()+Math.random()});
+  saveMenuItems();
+  document.getElementById('menu-new-name').value='';
+  document.getElementById('menu-new-price').value='';
+  document.getElementById('menu-new-cat').value='';
+  renderMenu();
+}
+
+function menuClearSection(status){
+  const labels={keep:'유지 메뉴',cut:'빼기',add:'신규 메뉴'};
+  if(!confirm(`"${labels[status]}" 섹션의 모든 메뉴를 삭제하시겠습니까?`))return;
+  menuItems=menuItems.filter(m=>m.status!==status);
+  saveMenuItems();renderMenu();
+  // Clear section AI too
+  const el=document.getElementById('menu-ai-'+status+'-result');
+  if(el){el.classList.remove('show');el.innerHTML='';}
+}
+
+let menuSectionAIData=JSON.parse(localStorage.getItem('rc_menu_sec_ai')||'{}');
+function saveMenuSectionAI(){localStorage.setItem('rc_menu_sec_ai',JSON.stringify(menuSectionAIData));}
+
+async function menuSectionAI(status){
+  const items=menuItems.filter(m=>m.status===status);
+  const labels={keep:'유지 메뉴',cut:'빼기로 분류한 메뉴',add:'신규 추가 후보 메뉴'};
+  const btn=document.getElementById('menu-ai-'+status);
+  const resEl=document.getElementById('menu-ai-'+status+'-result');
+  if(!items.length){resEl.innerHTML='<div class="ai-toggle">메뉴가 없습니다</div>';resEl.classList.add('show');return;}
+  btn.disabled=true;btn.textContent='분석 중...';
+  resEl.innerHTML='<div class="ai-toggle">분석 중...</div>';resEl.classList.add('show');
+  try{
+    const list=items.map(m=>`${m.name} (${m.price||'가격미정'}, ${m.category||'미분류'})`).join('\n');
+    const bmcCtx=typeof bmcData!=='undefined'?JSON.stringify(bmcData):'{}';
+    const prompt=`K-Soulfood (Buena Park, CA 한국식 포차) — "${labels[status]}" 섹션 분석:\n\n${list}\n\nBMC: ${bmcCtx}\n\n이 섹션에 대해 분석:\n1) 전체적 구성 평가 (밸런스, 중복, 빠진 것)\n2) 가격 적정성 (Buena Park 지역 기준)\n3) 타겟 고객 (한인 20-40대, 미국인) 적합도\n4) 구체적 추천 (${status==='cut'?'정말 빼도 되는지 / 대체안':status==='add'?'추가할 가치가 있는지 / 우선순위':'유지하되 개선할 점'})\n\n간결하게 핵심만.`;
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    const result=data.reply||data.error||'';
+    menuSectionAIData[status]=result;saveMenuSectionAI();
+    resEl.innerHTML=`<div class="ai-toggle" onclick="this.nextElementSibling.classList.toggle('open')">AI 피드백 (클릭하여 접기/펼치기) <span>&#9660;</span></div><div class="ai-body open">${escapeHtml(result)}</div>`;
+  }catch(e){resEl.innerHTML='<div class="ai-toggle">오류 발생</div>';}
+  btn.disabled=false;btn.textContent='AI 피드백';
+}
+
+function menuDelete(id){menuItems=menuItems.filter(m=>m.id!==id);saveMenuItems();renderMenu();}
+
+function menuMove(id,status){
+  const item=menuItems.find(m=>m.id===id);
+  if(item){item.status=status;saveMenuItems();renderMenu();}
+}
+
+let dragMenuId=null;
+function menuDragStart(id){dragMenuId=id;}
+function menuDrop(e,status){
+  e.preventDefault();
+  if(dragMenuId!==null){menuMove(dragMenuId,status);dragMenuId=null;}
+}
+
+function toggleMenuAI(id){
+  const el=document.getElementById('mai-'+id);
+  if(el)el.classList.toggle('show');
+}
+
+async function menuGetAI(id){
+  const item=menuItems.find(m=>m.id===id);
+  if(!item)return;
+  const el=document.getElementById('mai-'+id);
+  if(el){el.classList.add('show');el.textContent='분석 중...';}
+  try{
+    const bmcCtx=typeof bmcData!=='undefined'?JSON.stringify(bmcData):'{}';
+    const prompt=`메뉴 아이템 분석:\n이름: ${item.name}\n가격: ${item.price}\n카테고리: ${item.category}\n현재 상태: ${item.status==='keep'?'유지':item.status==='cut'?'빼기':'추가 후보'}\n\n매장 BMC: ${bmcCtx}\n\n이 메뉴에 대해 2-3줄로 피드백 제공:\n1) 타겟 고객(한인 20-40대, 미국인 푸드러버) 적합도\n2) 가격 적정성 (Buena Park 지역 기준)\n3) 개선/대체 추천 (있다면)`;
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    item.aiFeedback=data.reply||data.error||'';
+    saveMenuItems();if(el)el.textContent=item.aiFeedback;
+  }catch(e){if(el)el.textContent='오류가 발생했습니다.';}
+}
+
+async function menuAIFeedbackAll(){
+  const btn=document.getElementById('menu-ai-all-btn');
+  const resEl=document.getElementById('menu-ai-result');
+  if(!menuItems.length){resEl.textContent='먼저 메뉴를 추가하세요.';return;}
+  btn.disabled=true;btn.textContent='분석 중...';resEl.textContent='AI가 메뉴를 분석하고 있습니다...';
+  try{
+    const keep=menuItems.filter(m=>m.status==='keep').map(m=>`${m.name} (${m.price}, ${m.category})`).join(', ');
+    const cut=menuItems.filter(m=>m.status==='cut').map(m=>`${m.name} (${m.price})`).join(', ');
+    const add=menuItems.filter(m=>m.status==='add').map(m=>`${m.name} (${m.price}, ${m.category})`).join(', ');
+    const bmcCtx=typeof bmcData!=='undefined'?JSON.stringify(bmcData):'{}';
+    const prompt=`K-Soulfood (Buena Park, CA 한국식 포차) 메뉴 전체 분석:\n\n유지 메뉴: ${keep||'없음'}\n빼기 메뉴: ${cut||'없음'}\n추가 후보: ${add||'없음'}\n\nBMC: ${bmcCtx}\n\n다음을 분석해줘:\n1. 전체 메뉴 밸런스 평가 (안주/메인/주류/사이드 비율)\n2. 가격대 적정성 (Buena Park 한인타운 기준)\n3. 빼기로 분류된 메뉴에 대한 의견 (정말 빼도 되는지)\n4. 추가 추천 메뉴 3-5개 (타겟 고객 맞춤)\n5. 매출 극대화를 위한 메뉴 전략 제안`;
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    resEl.textContent=data.reply||data.error||'';
+  }catch(e){resEl.textContent='오류가 발생했습니다.';}
+  btn.disabled=false;btn.textContent='AI 전체 피드백 받기';
+}
+
+async function menuRefreshQuestions(){
+  const btn=document.getElementById('menu-q-refresh');
+  const el=document.getElementById('menu-questions');
+  btn.disabled=true;btn.innerHTML='&#8987; 생성 중...';
+  try{
+    const items=menuItems.map(m=>`${m.name}(${m.status})`).join(', ');
+    const prompt=`K-Soulfood 메뉴 현황: ${items||'아직 없음'}\n\n메뉴 기획을 발전시키기 위한 날카로운 팔로우업 질문 5개 생성. JSON 배열로만:\n["q1","q2","q3","q4","q5"]`;
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    const match=(data.reply||'').match(/\[[\s\S]*\]/);
+    if(match){menuQuestions=JSON.parse(match[0]);saveMenuQuestions();}
+  }catch(e){}
+  btn.disabled=false;btn.innerHTML='&#8635; 새로고침';
+  renderMenuQuestions();
+}
+
+function renderMenuQuestions(){
+  const el=document.getElementById('menu-questions');
+  if(!menuQuestions.length){el.textContent='"새로고침"을 클릭하면 AI가 질문을 생성합니다.';return;}
+  el.innerHTML=menuQuestions.map((q,i)=>`
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--accent);font-weight:700;flex-shrink:0;">${i+1}.</span>
+      <span style="font-size:13px;color:var(--text);line-height:1.6;">${escapeHtml(q)}</span>
+    </div>
+  `).join('');
+}
+
+function renderMenu(){
+  ['keep','cut','add'].forEach(status=>{
+    const items=menuItems.filter(m=>m.status===status);
+    document.getElementById('menu-cnt-'+status).textContent=items.length;
+    // Restore section AI if saved
+    const savedAI=menuSectionAIData[status];
+    if(savedAI){
+      const resEl=document.getElementById('menu-ai-'+status+'-result');
+      if(resEl&&!resEl.classList.contains('show')){
+        resEl.innerHTML=`<div class="ai-toggle" onclick="this.nextElementSibling.classList.toggle('open')">AI 피드백 (클릭하여 접기/펼치기) <span>&#9660;</span></div><div class="ai-body">${escapeHtml(savedAI)}</div>`;
+        resEl.classList.add('show');
+      }
+    }
+    document.getElementById('menu-list-'+status).innerHTML=items.map(m=>`
+      <div class="menu-item-card" draggable="true" ondragstart="menuDragStart(${m.id})" id="mcard-${m.id}">
+        <div class="menu-item-actions">
+          ${status!=='keep'?`<button onclick="menuMove(${m.id},'keep')" title="유지로" style="color:var(--green);">&#10003;</button>`:''}
+          ${status!=='cut'?`<button onclick="menuMove(${m.id},'cut')" title="빼기로" style="color:var(--critical);">&#10007;</button>`:''}
+          ${status!=='add'?`<button onclick="menuMove(${m.id},'add')" title="신규로" style="color:var(--accent);">+</button>`:''}
+          <button onclick="menuDelete(${m.id})" title="삭제" style="font-size:11px;">&#128465;</button>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span class="menu-item-name">${escapeHtml(m.name)}</span>
+          ${m.price?`<span class="menu-item-price">${escapeHtml(m.price)}</span>`:''}
+        </div>
+        ${m.category?`<div class="menu-item-cat">${escapeHtml(m.category)}</div>`:''}
+      </div>
+    `).join('')||`<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px 0;">드래그하여 메뉴를 여기로</div>`;
+  });
+  renderMenuQuestions();
+}
+
+// ==================== BRANDING PAGE ====================
+const BMC_KEYS=[
+  {key:'customerSegments',label:'고객 세그먼트',icon:'&#128101;',desc:'누구를 위한 가게인가?',
+    hint:'어떤 사람들이 우리 가게에 오는가? 나이, 직업, 라이프스타일, 방문 목적 등',
+    examples:['한인 20-40대 직장인 퇴근 후 모임','미국인 푸드 블로거/인플루언서','심야 2차 고객 (카라오케 후)']},
+  {key:'valuePropositions',label:'가치 제안',icon:'&#127775;',desc:'고객에게 주는 핵심 가치',
+    hint:'왜 경쟁사가 아닌 우리 가게를 선택해야 하는가?',
+    examples:['정통 한국 포차 감성을 미국에서 경험','합리적 가격의 소주+안주 세트','인스타그래머블한 인테리어/플레이팅']},
+  {key:'channels',label:'채널',icon:'&#128225;',desc:'고객에게 어떻게 도달하는가?',
+    hint:'고객이 우리를 발견하고, 방문하고, 재방문하는 경로',
+    examples:['Instagram/TikTok 숏폼 콘텐츠','Google Maps + Yelp 리뷰 최적화','한인 커뮤니티 (미주중앙일보, 라디오코리아)']},
+  {key:'customerRelationships',label:'고객 관계',icon:'&#128149;',desc:'고객과의 관계 유형',
+    hint:'고객과 어떤 관계를 맺고 유지하는가?',
+    examples:['단골 스탬프/VIP 프로그램','SNS DM/댓글 소통, 리뷰 답글','생일/기념일 서프라이즈 서비스']},
+  {key:'revenueStreams',label:'수익원',icon:'&#128176;',desc:'어디서 돈을 버는가?',
+    hint:'매출이 발생하는 모든 원천과 가격 전략',
+    examples:['음식 매출 (안주 평균 $18-25)','주류 매출 (소주 보틀 $15, 맥주 $7)','단체 예약 패키지 ($50/인)']},
+  {key:'keyResources',label:'핵심 자원',icon:'&#128273;',desc:'필요한 핵심 자원',
+    hint:'사업 운영에 반드시 필요한 물적/인적/지적 자원',
+    examples:['경력 한식 셰프 + 훈련된 서빙팀','ABC Type 47 주류면허','포차 감성 인테리어 (네온, 텐트, 좌석)']},
+  {key:'keyActivities',label:'핵심 활동',icon:'&#9881;',desc:'반드시 수행해야 할 활동',
+    hint:'가치를 만들고 전달하기 위해 매일/매주 해야 할 핵심 업무',
+    examples:['메뉴 R&D 및 시즌 메뉴 개발','식재료 품질관리 및 원가 관리','SNS 콘텐츠 주 3회 이상 업로드']},
+  {key:'keyPartners',label:'핵심 파트너',icon:'&#129309;',desc:'필요한 파트너/공급자',
+    hint:'우리가 직접 하지 않고 파트너에게 의존하는 영역',
+    examples:['한국 식재료 도매 (H Mart, Zion Market)','주류 유통업체 (소주/맥주 공급)','인테리어/간판 업체, 회계사/변호사']},
+  {key:'costStructure',label:'비용 구조',icon:'&#128178;',desc:'주요 비용 항목',
+    hint:'사업 운영에 드는 가장 큰 비용들과 고정/변동 구분',
+    examples:['임대료 (Buena Park 월 $5K-8K)','인건비 10명 (CA 최저임금 $16.50+)','식재료 원가 (매출의 28-32% 목표)']}
+];
+
+let bmcData=JSON.parse(localStorage.getItem('rc_bmc')||'null')||{
+  customerSegments:'한인 20-40대 직장인/친구모임, 현지 미국인 푸드 러버, 심야 음주 고객층',
+  valuePropositions:'정통 한국 포차 감성 + 정갈한 안주 + 합리적 가격의 소주/맥주',
+  channels:'Instagram, TikTok, Naver Blog, Google Maps, Yelp, 현지 한인 커뮤니티',
+  customerRelationships:'단골 프로그램, SNS 소통, 이벤트 초대, 리뷰 답글',
+  revenueStreams:'음식 매출 (안주류), 주류 매출 (소주/맥주/사케), 디저트/음료, 단체 예약',
+  keyResources:'숙련된 주방팀, ABC 주류 면허, 포차 인테리어/분위기, 한국 식재료 공급망',
+  keyActivities:'메뉴 개발, 식재료 품질관리, SNS 마케팅, 고객 서비스, 위생관리',
+  keyPartners:'한국 식재료 도매상, 주류 유통업체, 인테리어 업체, 배달앱 (향후)',
+  costStructure:'임대료, 인건비(10명), 식재료, 주류 원가, 마케팅비, 보험/인허가'
+};
+let bmcMemo=localStorage.getItem('rc_bmc_memo')||'';
+let bmcQuestions=JSON.parse(localStorage.getItem('rc_bmc_q')||'[]');
+if(!bmcQuestions.length)bmcQuestions=[
+  '포차 컨셉과 파인다이닝의 중간 포지셔닝을 잡으려면 가격대를 어떻게 설정할 것인가?',
+  '한인 고객과 비한인 고객의 비율 목표는? 각 그룹별 차별화된 접근 전략은?',
+  '주변 경쟁 한식당/바 대비 우리만의 "한 줄 차별점"은 무엇인가?',
+  '런치 영업을 할 것인가? 심야 전용으로 갈 것인가? 각각의 수익 시뮬레이션은?',
+  '6개월 후 재방문율 목표는? 이를 위한 구체적 단골 확보 전략은?'
+];
+
+function saveBmc(){localStorage.setItem('rc_bmc',JSON.stringify(bmcData));}
+function saveBmcMemo(){bmcMemo=document.getElementById('bmc-memo').value;localStorage.setItem('rc_bmc_memo',bmcMemo);}
+function saveBmcQuestions(){localStorage.setItem('rc_bmc_q',JSON.stringify(bmcQuestions));}
+
+async function refreshBmcQuestions(){
+  const btn=document.getElementById('bmc-q-refresh-btn');
+  btn.disabled=true;btn.innerHTML='&#8987; 생성 중...';
+  try{
+    const prompt=`현재 비즈니스 모델 캔버스:\n${JSON.stringify(bmcData)}\n\n메모:\n${bmcMemo}\n\n이 비즈니스를 더 구체화하고 발전시키기 위한 핵심 팔로우업 질문 5개를 생성하세요. 이전 질문과 겹치지 않게, 실행 가능하고 날카로운 질문으로.\n\nJSON 배열로만 응답:\n["질문1","질문2","질문3","질문4","질문5"]`;
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    const text=data.reply||'';
+    const match=text.match(/\[[\s\S]*\]/);
+    if(match){bmcQuestions=JSON.parse(match[0]);saveBmcQuestions();renderBmcQuestions();}
+  }catch(e){}
+  btn.disabled=false;btn.innerHTML='&#8635; 새로고침';
+}
+
+function renderBmc(){
+  const grid=document.getElementById('bmc-grid');
+  grid.innerHTML=BMC_KEYS.map(k=>`
+    <div class="bmc-card" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;${k.key==='costStructure'?'grid-column:span 2':''}">
+      <div style="font-size:12px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+        <span>${k.icon}</span> ${k.label}
+        <span class="bmc-help-dot" onmouseenter="showBmcTip(this,'${k.key}')" onmouseleave="hideBmcTip()" style="width:16px;height:16px;border-radius:50%;background:var(--border);color:var(--text-muted);font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:help;margin-left:auto;flex-shrink:0;">?</span>
+      </div>
+      <textarea id="bmc-field-${k.key}" oninput="bmcFieldChanged('${k.key}',this.value)" style="width:100%;min-height:70px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;line-height:1.7;resize:vertical;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">${escapeHtml(bmcData[k.key]||'')}</textarea>
+    </div>
+  `).join('');
+  document.getElementById('bmc-memo').value=bmcMemo;
+  renderBmcQuestions();
+}
+
+function bmcFieldChanged(key,val){bmcData[key]=val;saveBmc();}
+
+function showBmcTip(el,key){
+  hideBmcTip();
+  const k=BMC_KEYS.find(b=>b.key===key);if(!k)return;
+  const tip=document.createElement('div');
+  tip.id='bmc-tooltip';
+  tip.style.cssText='position:absolute;z-index:999;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25);width:280px;top:0;right:0;transform:translateY(-100%) translateY(-8px);';
+  tip.innerHTML=`
+    <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px;">${k.icon} ${k.label}</div>
+    <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:8px;">${k.hint}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">입력 예시:</div>
+    ${k.examples.map(ex=>`<div style="font-size:11px;color:var(--text);padding:3px 0;border-bottom:1px solid var(--border);line-height:1.5;">• ${ex}</div>`).join('')}
+  `;
+  el.closest('.bmc-card').appendChild(tip);
+}
+function hideBmcTip(){const t=document.getElementById('bmc-tooltip');if(t)t.remove();}
+
+function renderBmcQuestions(){
+  document.getElementById('bmc-questions').innerHTML=bmcQuestions.map((q,i)=>`
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--accent);font-weight:700;flex-shrink:0;">${i+1}.</span>
+      <span style="font-size:13px;color:var(--text);line-height:1.6;">${escapeHtml(q)}</span>
+    </div>
+  `).join('');
+}
+
+async function sendBmcInput(){
+  const input=document.getElementById('bmc-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  const statusEl=document.getElementById('bmc-status');
+  statusEl.innerHTML='<span style="color:var(--accent);">AI가 비즈니스 모델 캔버스를 업데이트하고 있습니다...</span>';
+  input.disabled=true;
+  try{
+    const prompt=`현재 비즈니스 모델 캔버스:\n${JSON.stringify(bmcData,null,2)}\n\n사용자 추가 정보:\n${msg}\n\n위 추가 정보를 반영하여 비즈니스 모델 캔버스 9개 항목을 전부 업데이트하고, 새로운 팔로우업 질문 5개도 생성하세요.\n\nJSON으로만 응답:\n{"canvas":{"customerSegments":"...","valuePropositions":"...","channels":"...","customerRelationships":"...","revenueStreams":"...","keyResources":"...","keyActivities":"...","keyPartners":"...","costStructure":"..."},"questions":["q1","q2","q3","q4","q5"]}`;
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    const text=data.reply||data.error||'';
+    const match=text.match(/\{[\s\S]*\}/);
+    if(match){
+      const parsed=JSON.parse(match[0]);
+      if(parsed.canvas){Object.assign(bmcData,parsed.canvas);saveBmc();}
+      if(parsed.questions){bmcQuestions=parsed.questions;saveBmcQuestions();}
+      renderBmc();
+      statusEl.innerHTML='<span style="color:var(--green);">캔버스가 업데이트되었습니다!</span>';
+      input.value='';
+    } else {
+      statusEl.innerHTML='<span style="color:var(--high);">응답 파싱 실패. 다시 시도해주세요.</span>';
+    }
+  }catch(e){
+    statusEl.innerHTML='<span style="color:var(--critical);">오류: '+e.message+'</span>';
+  }
+  input.disabled=false;
+}
+
+function brandTab(t){
+  document.querySelectorAll('#page-branding .sub-tab').forEach((b,i)=>b.classList.toggle('active',(t==='canvas'?0:1)===i));
+  document.getElementById('brand-canvas').style.display=t==='canvas'?'block':'none';
+  document.getElementById('brand-refs').style.display=t==='refs'?'block':'none';
+  if(t==='canvas')renderBmc();
+  if(t==='refs')renderRefs();
+}
+
+// ==================== REFERENCES ====================
+let refs=JSON.parse(localStorage.getItem('rc_refs')||'[]');
+function saveRefs(){localStorage.setItem('rc_refs',JSON.stringify(refs));}
+
+function addReference(){
+  const input=document.getElementById('ref-url-input');
+  const url=input.value.trim();
+  if(!url)return;
+  const isImage=/\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url);
+  refs.push({url,type:isImage?'image':'link',title:url.split('/').pop()||url,summary:'',date:new Date().toISOString()});
+  saveRefs();input.value='';renderRefs();
+  if(!isImage)fetchLinkSummary(refs.length-1,url);
+}
+
+function addImageFiles(files){
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      refs.push({url:e.target.result,type:'image',title:file.name,summary:'',date:new Date().toISOString()});
+      saveRefs();renderRefs();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function fetchLinkSummary(idx,url){
+  try{
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:`이 URL의 내용을 한국어로 2줄로 요약해줘: ${url}`}]);
+    if(data.reply){refs[idx].summary=data.reply;refs[idx].title=data.reply.split('\n')[0].slice(0,50);saveRefs();renderRefs();}
+  }catch(e){}
+}
+
+function deleteRef(idx){refs.splice(idx,1);saveRefs();renderRefs();}
+
+function renderRefs(){
+  const el=document.getElementById('refs-list');
+  if(!refs.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128206;</div><p>레퍼런스가 없습니다.<br>이미지나 링크를 추가하세요.</p></div>';return;}
+  el.innerHTML=refs.map((r,i)=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;">
+      ${r.type==='image'?`<img src="${r.url}" style="width:100%;max-height:300px;object-fit:cover;display:block;">`:
+        `<div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+          <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="font-size:13px;color:var(--accent);font-weight:600;word-break:break-all;">${escapeHtml(r.url)}</a>
+        </div>`}
+      <div style="padding:12px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${escapeHtml(r.title)}</div>
+          ${r.summary?`<div style="font-size:12px;color:var(--text-muted);line-height:1.5;">${escapeHtml(r.summary)}</div>`:''}
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${new Date(r.date).toLocaleDateString('ko')}</div>
+        </div>
+        <button onclick="deleteRef(${i})" style="background:none;border:none;color:var(--critical);font-size:16px;cursor:pointer;padding:0 4px;font-weight:700;">&times;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Paste image support on refs tab
+document.addEventListener('paste',function(e){
+  const items=e.clipboardData?.items;
+  if(!items)return;
+  // Only handle if refs tab is visible
+  const refsEl=document.getElementById('brand-refs');
+  if(!refsEl||refsEl.style.display==='none')return;
+  for(let item of items){
+    if(item.type.startsWith('image/')){
+      const file=item.getAsFile();
+      if(file)addImageFiles([file]);
+    }
+  }
+});
+
+// ==================== BRANDING CHAT ====================
+let brandChatMessages=JSON.parse(localStorage.getItem('rc_brand_chat')||'[]');
+let brandChatLoading=false;
+function saveBrandChatHistory(){localStorage.setItem('rc_brand_chat',JSON.stringify(brandChatMessages));}
+
+function renderBrandChat(){
+  const el=document.getElementById('brand-chat-messages');
+  if(!el)return;
+  if(!brandChatMessages.length){
+    el.innerHTML=`
+      <div class="chat-msg system">브랜딩 에이전트</div>
+      <div class="chat-msg assistant">안녕하세요! K-Soulfood 브랜딩 전략 에이전트입니다.\n\n브랜드 포지셔닝, 컨셉 차별화, 타겟 고객 전략, 매장 분위기 등 무엇이든 물어보세요.</div>
+    `;
+  } else {
+    el.innerHTML=brandChatMessages.map(m=>`<div class="chat-msg ${m.role}">${escapeHtml(m.content)}</div>`).join('');
+  }
+  if(brandChatLoading)el.innerHTML+=`<div class="chat-typing"><span>.</span><span>.</span><span>.</span> 생각 중</div>`;
+  el.scrollTop=el.scrollHeight;
+  const sugEl=document.getElementById('brand-chat-suggestions');
+  if(sugEl&&!brandChatLoading){
+    sugEl.innerHTML=['브랜드 컨셉 잡아줘','경쟁사 대비 차별점','타겟 고객 분석','매장 분위기 전략','메뉴 포지셔닝'].map(s=>`<button class="chat-suggestion" onclick="document.getElementById('brand-chat-input').value='${s}';sendBrandChat();">${s}</button>`).join('');
+  }
+}
+
+async function sendBrandChat(){
+  const input=document.getElementById('brand-chat-input');
+  const msg=input.value.trim();
+  if(!msg||brandChatLoading)return;
+  input.value='';
+  brandChatMessages.push({role:'user',content:msg});
+  brandChatLoading=true;saveBrandChatHistory();renderBrandChat();
+  try{
+    const context=`현재 BMC:\n${JSON.stringify(bmcData)}\n\n사용자 질문: ${msg}`;
+    const data=await callAI('/api/compliance-chat',[...brandChatMessages.slice(0,-1),{role:'user',content:context}]);
+    brandChatMessages.push({role:'assistant',content:data.error?'오류: '+data.error:data.reply});
+  }catch(e){brandChatMessages.push({role:'assistant',content:'오류가 발생했습니다.'});}
+  brandChatLoading=false;saveBrandChatHistory();renderBrandChat();
+}
+
+// ==================== SALES AI TAB ====================
+function salesTab(t){
+  document.querySelectorAll('#page-sales .sub-tab').forEach((b,i)=>b.classList.toggle('active',(t==='dashboard'?0:1)===i));
+  document.getElementById('sales-tab-dashboard').style.display=t==='dashboard'?'flex':'none';
+  document.getElementById('sales-tab-dashboard').style.flexDirection='column';
+  document.getElementById('sales-tab-ai').style.display=t==='ai'?'block':'none';
+}
+
+let salesAIData=JSON.parse(localStorage.getItem('rc_sales_ai')||'{}');
+let salesAIQuestions=JSON.parse(localStorage.getItem('rc_sales_q')||'[]');
+function saveSalesAI(){localStorage.setItem('rc_sales_ai',JSON.stringify(salesAIData));}
+function saveSalesQ(){localStorage.setItem('rc_sales_q',JSON.stringify(salesAIQuestions));}
+
+function getSalesDataSummary(){
+  // Try to get data from iframe
+  try{
+    const fr=document.getElementById('sales-iframe');
+    if(!fr||!fr.contentWindow)return null;
+    const iS=fr.contentWindow.S;
+    if(!iS)return null;
+    let summary='';
+    if(iS.mode==='rr'){
+      const rep=iS.rrReports?.find(r=>r.id===iS.rrActive);
+      if(!rep)return null;
+      const d=rep.data;
+      summary=`[매출 리포트]\n기간: ${d.period||'N/A'}\n총매출(Gross): $${d.grossSales?.toFixed(0)||0}\n순매출(Net): $${d.netSales?.toFixed(0)||0}\n할인: $${d.totalDiscounts?.toFixed(0)||0}\n환불: $${d.totalRefunds?.toFixed(0)||0}\nCOGS: $${(d.cogs||0).toFixed(0)}\n매출이익: $${(d.grossProfit||0).toFixed(0)}\n이익률: ${(d.profitMargin||0).toFixed(1)}%\n\n카테고리별:\n${(d.categories||[]).map(c=>`- ${c.name}: Net $${c.netSales?.toFixed(0)} (${c.items?.length||0}개)`).join('\n')}\n\nTop 10:\n${(d.topItems||[]).slice(0,10).map((it,i)=>`${i+1}. ${it.name}: $${it.netSales?.toFixed(0)}, ${it.sold||0}개`).join('\n')}`;
+    } else {
+      const rep=iS.liReports?.find(r=>r.id===iS.liActive);
+      if(!rep)return null;
+      const d=rep.data;
+      summary=`[주문 분석]\n기간: ${d.period||'N/A'}\n총주문: ${d.totalOrders||0}건\n총매출: $${d.totalRevenue?.toFixed(0)||0}\n평균객단가: $${d.avgOrderValue?.toFixed(0)||0}\n환불건: ${d.refundCount||0}\n\n서버별:\n${(d.servers||[]).slice(0,5).map(s=>`- ${s.name}: $${s.revenue?.toFixed(0)}, ${s.orders}건`).join('\n')}\n\n시간대별:\n${(d.hours||[]).filter(h=>h.revenue>0).slice(0,8).map(h=>`- ${h.hour}시: $${h.revenue?.toFixed(0)}, ${h.orderCount}건`).join('\n')}\n\nTop 10:\n${(d.topItems||[]).slice(0,10).map((it,i)=>`${i+1}. ${it.name}: ${it.count}회`).join('\n')}`;
+    }
+    return summary;
+  }catch(e){return null;}
+}
+
+async function runSalesAIAnalysis(){
+  const btn=document.getElementById('sales-ai-run-btn');
+  const summary=getSalesDataSummary();
+  if(!summary){
+    document.getElementById('sales-ai-insights').textContent='매출 대시보드 탭에서 CSV를 먼저 업로드하세요.';
+    return;
+  }
+  btn.disabled=true;btn.textContent='분석 중...';
+  document.getElementById('sales-ai-insights').textContent='AI가 매출 데이터를 분석하고 있습니다...';
+  document.getElementById('sales-ai-nextsteps').textContent='분석 중...';
+  document.getElementById('sales-ai-weaknesses').textContent='분석 중...';
+
+  // Include BMC and menu context
+  const bmcCtx=typeof bmcData!=='undefined'?`\n\nBMC: ${JSON.stringify(bmcData)}`:'';
+  const menuCtx=typeof menuItems!=='undefined'&&menuItems.length?`\n\n현재 메뉴 기획:\n유지: ${menuItems.filter(m=>m.status==='keep').map(m=>m.name).join(', ')}\n신규: ${menuItems.filter(m=>m.status==='add').map(m=>m.name).join(', ')}\n빼기: ${menuItems.filter(m=>m.status==='cut').map(m=>m.name).join(', ')}`:'';
+
+  const prompt=summary+bmcCtx+menuCtx+`\n\n위 K-Soulfood (Buena Park, CA 한국식 포차) 매출 데이터와 비즈니스 컨텍스트를 종합 분석하여 다음 JSON으로만 응답:
+{
+  "insights": "핵심 인사이트 3-5가지 (각 줄바꿈으로 구분, 번호 매기기)",
+  "nextSteps": "실행 가능한 넥스트 스텝 3-5가지 (메뉴 추천, 브랜딩 방향, 매출 전략 포함)",
+  "weaknesses": "부족한 점, 리스크, 돌아볼 점 3-5가지",
+  "questions": ["팔로우업 질문1","질문2","질문3","질문4","질문5"],
+  "menuSuggestions": "매출 데이터 기반 메뉴 추천/변경 제안 3가지",
+  "brandingSuggestions": "매출 패턴 기반 브랜딩 방향 제안 2가지"
+}`;
+
+  try{
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:prompt}]);
+    const text=data.reply||data.error||'';
+    const match=text.match(/\{[\s\S]*\}/);
+    if(match){
+      const parsed=JSON.parse(match[0]);
+      salesAIData=parsed;saveSalesAI();
+      renderSalesAI();
+    } else {
+      document.getElementById('sales-ai-insights').textContent=text;
+    }
+  }catch(e){
+    document.getElementById('sales-ai-insights').textContent='오류: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='매출 데이터 AI 분석 실행';
+}
+
+function renderSalesAI(){
+  if(salesAIData.insights)document.getElementById('sales-ai-insights').textContent=salesAIData.insights;
+  if(salesAIData.nextSteps){
+    let ns=salesAIData.nextSteps;
+    if(salesAIData.menuSuggestions)ns+='\n\n🍽 메뉴 추천:\n'+salesAIData.menuSuggestions;
+    if(salesAIData.brandingSuggestions)ns+='\n\n🎨 브랜딩 제안:\n'+salesAIData.brandingSuggestions;
+    document.getElementById('sales-ai-nextsteps').textContent=ns;
+  }
+  if(salesAIData.weaknesses)document.getElementById('sales-ai-weaknesses').textContent=salesAIData.weaknesses;
+  if(salesAIData.questions){salesAIQuestions=salesAIData.questions;saveSalesQ();renderSalesQuestions();}
+}
+
+function renderSalesQuestions(){
+  const el=document.getElementById('sales-ai-questions');
+  if(!salesAIQuestions.length){el.textContent='분석을 실행하면 질문이 생성됩니다.';return;}
+  el.innerHTML=salesAIQuestions.map((q,i)=>`
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="document.getElementById('sales-ai-q-input').value='${q.replace(/'/g,"\\'")}';askSalesAI();">
+      <span style="font-size:12px;color:var(--accent);font-weight:700;flex-shrink:0;">${i+1}.</span>
+      <span style="font-size:13px;color:var(--text);line-height:1.6;">${escapeHtml(q)}</span>
+    </div>
+  `).join('');
+}
+
+async function refreshSalesQuestions(){
+  const btn=document.getElementById('sales-q-refresh');
+  btn.disabled=true;btn.innerHTML='&#8987; 생성 중...';
+  const summary=getSalesDataSummary();
+  const ctx=summary||'매출 데이터 없음';
+  try{
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:`K-Soulfood 매출 현황:\n${ctx}\n\n매출 분석을 심화하기 위한 날카로운 팔로우업 질문 5개. JSON 배열로만:\n["q1","q2","q3","q4","q5"]`}]);
+    const match=(data.reply||'').match(/\[[\s\S]*\]/);
+    if(match){salesAIQuestions=JSON.parse(match[0]);saveSalesQ();renderSalesQuestions();}
+  }catch(e){}
+  btn.disabled=false;btn.innerHTML='&#8635; 새로고침';
+}
+
+async function askSalesAI(){
+  const input=document.getElementById('sales-ai-q-input');
+  const q=input.value.trim();if(!q)return;
+  input.value='';
+  const chatEl=document.getElementById('sales-ai-chat');
+  chatEl.innerHTML=`<div style="margin-bottom:8px;"><span style="color:var(--accent);font-weight:700;">Q:</span> ${escapeHtml(q)}</div><div style="color:var(--text-muted);">분석 중...</div>`;
+  const summary=getSalesDataSummary()||'데이터 없음';
+  const bmcCtx=typeof bmcData!=='undefined'?JSON.stringify(bmcData):'';
+  try{
+    const data=await callAI('/api/compliance-chat',[{role:'user',content:`K-Soulfood 매출 데이터:\n${summary}\n\nBMC: ${bmcCtx}\n\n질문: ${q}\n\n간결하고 실용적으로 한국어 답변.`}]);
+    chatEl.innerHTML=`<div style="margin-bottom:8px;"><span style="color:var(--accent);font-weight:700;">Q:</span> ${escapeHtml(q)}</div><div>${escapeHtml(data.reply||data.error||'')}</div>`;
+  }catch(e){chatEl.innerHTML=`<div>오류: ${e.message}</div>`;}
+}
+
+// Restore saved sales AI on page load
+if(salesAIData.insights)setTimeout(renderSalesAI,100);
+if(salesAIQuestions.length)setTimeout(renderSalesQuestions,100);
+
+// ==================== GUIDE ====================
+function openGuide(){document.getElementById('guide-overlay').classList.add('open');}
+function closeGuide(){document.getElementById('guide-overlay').classList.remove('open');}
+
+// ==================== SETTINGS & API KEY ====================
+function getApiKey(){return localStorage.getItem('rc_api_key')||'';}
+function getApiMode(){return localStorage.getItem('rc_api_mode')||'server';}
+
+function saveApiKey(){
+  const key=document.getElementById('settings-api-key').value.trim();
+  if(key){localStorage.setItem('rc_api_key',key);document.getElementById('api-key-status').innerHTML='<span style="color:var(--green);">API 키가 저장되었습니다.</span>';}
+  else{localStorage.removeItem('rc_api_key');document.getElementById('api-key-status').innerHTML='<span style="color:var(--text-muted);">API 키가 제거되었습니다.</span>';}
+}
+function toggleShowApiKey(){
+  const el=document.getElementById('settings-api-key');
+  const btn=document.getElementById('api-key-toggle-btn');
+  if(el.type==='password'){el.type='text';btn.textContent='숨기기';}else{el.type='password';btn.textContent='보기';}
+}
+function setApiMode(mode){
+  localStorage.setItem('rc_api_mode',mode);renderSettings();
+}
+function renderSettings(){
+  const key=getApiKey();
+  const mode=getApiMode();
+  const keyEl=document.getElementById('settings-api-key');
+  if(keyEl)keyEl.value=key;
+  const sBtn=document.getElementById('mode-server-btn');
+  const dBtn=document.getElementById('mode-direct-btn');
+  if(sBtn&&dBtn){
+    sBtn.style.borderColor=mode==='server'?'var(--accent)':'var(--border)';
+    sBtn.style.color=mode==='server'?'var(--accent)':'var(--text-muted)';
+    dBtn.style.borderColor=mode==='direct'?'var(--accent)':'var(--border)';
+    dBtn.style.color=mode==='direct'?'var(--accent)':'var(--text-muted)';
+  }
+  const statusEl=document.getElementById('api-key-status');
+  if(statusEl){
+    if(mode==='direct'&&!key)statusEl.innerHTML='<span style="color:var(--high);">직접 모드를 사용하려면 API 키를 입력하세요.</span>';
+    else if(mode==='direct'&&key)statusEl.innerHTML='<span style="color:var(--green);">직접 모드 활성화됨 — 브라우저에서 직접 API 호출</span>';
+    else statusEl.innerHTML='<span style="color:var(--text-muted);">서버 모드 — Vercel 서버를 통해 API 호출</span>';
+  }
+}
+function clearChatHistory(){
+  chatMessages=[];compChatMessages=[];
+  localStorage.removeItem('rc_chat');localStorage.removeItem('rc_comp_chat');
+  renderChat('chat-messages','chat-suggestions');
+  renderCompChat('comp-chat-messages','comp-chat-suggestions');
+  alert('채팅 기록이 초기화되었습니다.');
+}
+
+// Override chat send to support direct mode
+async function callAI(endpoint,messages){
+  const mode=getApiMode();
+  if(mode==='direct'){
+    const key=getApiKey();
+    if(!key)return {error:'설정에서 API 키를 입력해주세요.'};
+    try{
+      const sysPrompt=endpoint.includes('compliance')?COMP_SYSTEM_PROMPT:SNS_SYSTEM_PROMPT;
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:sysPrompt,messages})
+      });
+      const data=await resp.json();
+      if(data.error)return {error:data.error.message||'API 오류'};
+      return {reply:data.content[0].text};
+    }catch(e){return {error:'네트워크 오류: '+e.message};}
+  }
+  // server mode
+  const resp=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
+  return await resp.json();
+}
+
+const COMP_SYSTEM_PROMPT='당신은 미국 캘리포니아 Buena Park에 위치한 한국식 K-Soulfood의 전담 컴플라이언스 & 운영 에이전트입니다. 인허가, 노동법, 세금, 안전 전문. 항상 한국어로 답변. 간결하고 실용적으로.';
+const SNS_SYSTEM_PROMPT='당신은 미국 캘리포니아 Buena Park에 위치한 한국식 K-Soulfood의 전담 SNS 마케팅 에이전트입니다. 콘텐츠 기획, 캡션, 해시태그, 게시 타이밍 전문. 항상 한국어로 답변. 간결하고 실용적으로.';
+
+// Patch the chat send functions to use callAI
+const _origDoSendChat=doSendChat;
+doSendChat=async function(inputId,messagesId,suggestionsId){
+  const input=document.getElementById(inputId);
+  const msg=input.value.trim();
+  if(!msg||chatLoading)return;
+  input.value='';input.style.height='40px';
+  chatMessages.push({role:'user',content:msg});
+  chatLoading=true;saveChatHistory();
+  renderChat(messagesId,suggestionsId);
+  try{
+    const data=await callAI('/api/chat',chatMessages);
+    chatMessages.push({role:'assistant',content:data.error?'오류: '+data.error:data.reply});
+  }catch(e){chatMessages.push({role:'assistant',content:'오류가 발생했습니다.'});}
+  chatLoading=false;saveChatHistory();
+  renderChat('chat-messages','chat-suggestions');
+  renderChat('chat-messages-mobile','chat-suggestions-mobile');
+};
+const _origDoSendCompChat=doSendCompChat;
+doSendCompChat=async function(inputId,messagesId,suggestionsId){
+  const input=document.getElementById(inputId);
+  const msg=input.value.trim();
+  if(!msg||compChatLoading)return;
+  input.value='';input.style.height='40px';
+  compChatMessages.push({role:'user',content:msg});
+  compChatLoading=true;saveCompChatHistory();
+  renderCompChat(messagesId,suggestionsId);
+  try{
+    const data=await callAI('/api/compliance-chat',compChatMessages);
+    compChatMessages.push({role:'assistant',content:data.error?'오류: '+data.error:data.reply});
+  }catch(e){compChatMessages.push({role:'assistant',content:'오류가 발생했습니다.'});}
+  compChatLoading=false;saveCompChatHistory();
+  renderCompChat('comp-chat-messages','comp-chat-suggestions');
+  renderCompChat('comp-chat-messages-mobile','comp-chat-suggestions-mobile');
+};
+
+// ==================== INIT ====================
+renderFilters();renderTasks();updateStats();updateSnsBadge();
+renderChat('chat-messages','chat-suggestions');
+renderCompChat('comp-chat-messages','comp-chat-suggestions');
+</script>
+</body>
+</html>
+</body>
+</html>
